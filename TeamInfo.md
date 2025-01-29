@@ -8,11 +8,11 @@
 | TeamName    |         Dunkmasters         |
 | Captain     |       Nathan Ma     |
 | Captain     |  nma9@illinois.edu  |
-| Member1     |        Marvin       |
+| Member1     |        Marvin Yu      |
 | Member1     |   marviny2@illinois.edu  |
 | Member2     |     Evan Jordan     |
 | Member2     |  evanj3@illinois.edu |
-| Member3     |            Anthony            |
+| Member3     |            Anthony Xu           |
 | Member3     |          ayx2@illinois.edu              |
 
 ## Project Information
