@@ -19,10 +19,11 @@
 
 |   Info      |        Description     |
 | ----------- | ---------------------- |
-|  Title      |       ProjectTitle     |
+|  Title      |      ProCompare     |
 | System URL  |      link_to_system    |
 | Video Link  |      link_to_video     |
 
 ## Project Summary
 
-This is a summary of the project!
+Our project is an American football application that allows users to follow and compare players based on their statistics and recent news headlines. For each comparison of one player to another, we will compute scores via deep learning for each player based on their stats. Users can also favorite players, add their own personal notes to favorited players, and get notified whenever a new article is posted surrounding their favorite players.
+
