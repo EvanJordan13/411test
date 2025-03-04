@@ -40,4 +40,5 @@ df["YearBegin"] = df["YearBegin"].astype(int)
 df["YearEnd"] = df["YearEnd"].astype(int)
 df = df[df.YearEnd > 2015]
 df = df.reset_index()
+df = df.drop(columns=[df.columns[0], df.columns[1]])
 df.to_csv("../data/player_info.csv")
