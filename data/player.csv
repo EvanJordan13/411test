@@ -1,4 +1,4 @@
-player_id,player_name,age,team_id,position,player_score
+playerID,playerName,playerAge,teamID,position,score
 00-0000865,Charlie Batch,38,26,QB,1.784322099968137
 00-0007091,Matt Hasselbeck,40,13,QB,12.569505176025546
 00-0010346,Peyton Manning,39,9,QB,91.37722277586828
