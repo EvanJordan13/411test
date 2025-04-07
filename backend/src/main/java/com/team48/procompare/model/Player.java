@@ -1,5 +1,7 @@
 package com.team48.procompare.model;
 
+import java.util.Map;
+
 public class Player {
     private String playerID;
     private String playerName;
@@ -8,17 +10,7 @@ public class Player {
     private String teamName;
     private String position;
     private Float score;
-
-    public Player() {}
-
-    public Player(String playerName, int playerAge, int teamId, String teamName, String position, Float score) {
-        this.playerName = playerName;
-        this.playerAge = playerAge;
-        this.teamId = teamId;
-        this.teamName = teamName;
-        this.position = position;
-        this.score = score;
-    }
+    private Map<String, Object> stats;
 
     public String getPlayerID() {
         return playerID;
@@ -74,5 +66,13 @@ public class Player {
 
     public void setScore(Float score) {
         this.score = score;
+    }
+
+    public Map<String, Object> getStats() {
+        return stats;
+    }
+
+    public void setStats(Map<String, Object> stats) {
+        this.stats = stats;
     }
 }

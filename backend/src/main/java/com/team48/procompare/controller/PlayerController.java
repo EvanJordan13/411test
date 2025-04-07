@@ -1,11 +1,16 @@
 package com.team48.procompare.controller;
 import com.team48.procompare.model.Player;
+import com.team48.procompare.model.PositionEnum;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.dao.EmptyResultDataAccessException;
 
@@ -20,8 +25,19 @@ public class PlayerController {
         player.setPlayerAge(result.getInt("playerAge"));
         player.setTeamId(result.getInt("teamID"));
         player.setTeamName(result.getString("teamName"));
-        player.setPosition(result.getString("position"));
         player.setScore(result.getFloat("score"));
+
+        // TODO: Should this just set all stats for simplicity?
+        // Set the average stats for the player based on their position.
+        String position = (result.getString("position"));
+        player.setPosition(position);
+        List<String> statNames = PositionEnum.valueOf(position).getStats();
+        Map<String, Object> stats = new HashMap<>();
+        // Add "avg" to beginning of statname, this corresponds to the SQL query below.
+        for(String statName : statNames) {
+            stats.put("avg" + statName, result.getObject("avg" + statName));
+        }
+        player.setStats(stats);
         return player;
     };
 
@@ -30,21 +46,28 @@ public class PlayerController {
     }
 
     /**
-     * Lists and sorts players given request parameters.
+     * Lists and sorts players given request parameters. Paginates results with pageSize 10.
      * TODO: Implement sorting and filtering.
+     * TODO: Write SQL query to get avgs of all stats.
+     * TODO: Maybe put the SQL query to get all averages in stored procedure.
      *
+     * @param page The page number to retrieve (default is 1).
      * @return List of Player objects that match criteria.
      * @throws EmptyResultDataAccessException if no player is found. Handled by GlobalExceptionHandler.
      */
     @GetMapping("/players")
-    public List<Player> listPlayers() {
-        // TODO: Figure out pagination, remove LIMIT 5.
+    public List<Player> listPlayers(@RequestParam(defaultValue = "1") int page) {
+        int pageSize = 10;
+        int offset = pageSize * (page - 1);
+        // Displays all avg stats for the players, even irrelevant ones.
+        // Add "avg" to stat name, e.g. avgpassYds (no capitalization).
+        // These will be parsed properly in the response, see the rowMapper code.
         String sql = """
-            SELECT p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score
-            FROM Player p JOIN Team t USING(teamID)
-            LIMIT 5
+            SELECT p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score,
+            FROM Player p JOIN Statistics s USING(playerID) JOIN Team t USING(teamID)
+            LIMIT ? OFFSET ?
             """;
-        return jdbcTemplate.query(sql, rowMapper);
+        return jdbcTemplate.query(sql, rowMapper, pageSize, offset);
     }
 
     /**
