@@ -85,9 +85,13 @@ public class PlayerController {
     @GetMapping("/players/{playerID}")
     public Player getPlayer(@PathVariable String playerID) {
         String sql = """
-            SELECT p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score
-            FROM Player p JOIN Team t USING(teamID)
+            SELECT p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score, COUNT(s.year) AS numSeasons, SUM(s.games) AS numGames,
+            AVG(s.passYds) AS avgpassYds, AVG(s.passTDs) AS avgpassTDs, AVG(s.ints) AS avgints, AVG(s.compPct) AS avgcompPct,
+            AVG(s.rshAtt) AS avgrshAtt, AVG(s.rshYds) AS avgrshYds, AVG(s.rshTDs) AS avgrshTDs, AVG(s.rec) AS avgrec,\s
+            AVG(s.recYds) AS avgrecYds, AVG(s.recTDs) AS avgrecTDs
+            FROM Player p JOIN Statistics s USING(playerID) JOIN Team t USING(teamID)
             WHERE p.playerID = ?
+            GROUP BY p.playerID
             """;
         return jdbcTemplate.queryForObject(sql, rowMapper, playerID);
     }

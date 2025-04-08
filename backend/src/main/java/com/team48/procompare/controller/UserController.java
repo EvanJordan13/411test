@@ -8,12 +8,18 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RestController
 public class UserController {
     private final JdbcTemplate jdbcTemplate;
 
     RowMapper<User> rowMapper = (result, rowNum) -> {
         User u = new User();
+        u.setUsername(result.getString("username"));
+        List<Player> favorites = new ArrayList<>();
+
         return u;
     };
 

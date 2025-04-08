@@ -4,14 +4,14 @@ import java.util.List;
 import com.team48.procompare.model.Player;
 
 public class User {
-    private int username;
+    private String username;
     private List<Player> favorites;
 
-    public int getUsername() {
+    public String getUsername() {
         return username;
     }
 
-    public void setUsername(int username) {
+    public void setUsername(String username) {
         this.username = username;
     }
 
