@@ -52,7 +52,7 @@ public class PlayerController {
      * TODO: Implement sorting and filtering.
      * TODO: Maybe put the SQL query to get all averages in stored procedure.
      *
-     * @param page The page number to retrieve (default is 1).
+     * @param page The page number to retrieve (default is 1) as a request parameter.
      * @return List of Player objects that match criteria.
      * @throws EmptyResultDataAccessException if no player is found. Handled by GlobalExceptionHandler.
      */
@@ -78,7 +78,7 @@ public class PlayerController {
     /**
      * Retrieves a single player by their playerID.
      *
-     * @param playerID The ID of the player to retrieve.
+     * @param playerID The ID of the player to retrieve as a path variable.
      * @return The Player object if found.
      * @throws EmptyResultDataAccessException if no player is found. Handled by GlobalExceptionHandler.
      */
