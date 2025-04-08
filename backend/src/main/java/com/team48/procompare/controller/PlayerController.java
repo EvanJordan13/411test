@@ -26,6 +26,8 @@ public class PlayerController {
         player.setTeamId(result.getInt("teamID"));
         player.setTeamName(result.getString("teamName"));
         player.setScore(result.getFloat("score"));
+        player.setNumSeasons(result.getInt("numSeasons"));
+        player.setNumGames(result.getInt("numGames"));
 
         // TODO: Should this just set all stats for simplicity?
         // Set the average stats for the player based on their position.
@@ -48,7 +50,6 @@ public class PlayerController {
     /**
      * Lists and sorts players given request parameters. Paginates results with pageSize 10.
      * TODO: Implement sorting and filtering.
-     * TODO: Write SQL query to get avgs of all stats.
      * TODO: Maybe put the SQL query to get all averages in stored procedure.
      *
      * @param page The page number to retrieve (default is 1).
@@ -63,8 +64,12 @@ public class PlayerController {
         // Add "avg" to stat name, e.g. avgpassYds (no capitalization).
         // These will be parsed properly in the response, see the rowMapper code.
         String sql = """
-            SELECT p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score,
+            SELECT p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score, COUNT(s.year) AS numSeasons, SUM(s.games) AS numGames,
+            AVG(s.passYds) AS avgpassYds, AVG(s.passTDs) AS avgpassTDs, AVG(s.ints) AS avgints, AVG(s.compPct) AS avgcompPct,
+            AVG(s.rshAtt) AS avgrshAtt, AVG(s.rshYds) AS avgrshYds, AVG(s.rshTDs) AS avgrshTDs, AVG(s.rec) AS avgrec,\s
+            AVG(s.recYds) AS avgrecYds, AVG(s.recTDs) AS avgrecTDs
             FROM Player p JOIN Statistics s USING(playerID) JOIN Team t USING(teamID)
+            GROUP BY p.playerID
             LIMIT ? OFFSET ?
             """;
         return jdbcTemplate.query(sql, rowMapper, pageSize, offset);

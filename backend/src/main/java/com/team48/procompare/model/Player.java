@@ -10,6 +10,9 @@ public class Player {
     private String teamName;
     private String position;
     private Float score;
+    private int numSeasons;
+    private int numGames;
+
     private Map<String, Object> stats;
 
     public String getPlayerID() {
@@ -66,6 +69,22 @@ public class Player {
 
     public void setScore(Float score) {
         this.score = score;
+    }
+
+    public int getNumSeasons() {
+        return numSeasons;
+    }
+
+    public void setNumSeasons(int numSeasons) {
+        this.numSeasons = numSeasons;
+    }
+
+    public int getNumGames() {
+        return numGames;
+    }
+
+    public void setNumGames(int numGames) {
+        this.numGames = numGames;
     }
 
     public Map<String, Object> getStats() {
