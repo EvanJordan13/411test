@@ -6,8 +6,8 @@ import type { Player } from "@/types";
 
 interface PlayerNoteCardProps {
   player: Player;
-  onSaveNote: (playerId: number, note: string) => void;
-  onRemoveFromFavorites: (playerId: number) => void;
+  onSaveNote: (playerId: string, note: string) => void;
+  onRemoveFromFavorites: (playerId: string) => void;
 }
 
 export default function PlayerNoteCard({

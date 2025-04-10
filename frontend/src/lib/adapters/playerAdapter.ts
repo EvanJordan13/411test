@@ -33,8 +33,7 @@ export function adaptPlayerData(backendPlayer: any): Player {
   const trend = backendPlayer.score > 85 ? "up" : "down";
 
   return {
-    id:
-      parseInt(backendPlayer.playerID, 10) || Math.floor(Math.random() * 1000), // Convert string id to number
+    id: backendPlayer.playerID,
     name: backendPlayer.playerName,
     team: backendPlayer.teamName || "UNK",
     position: positionMap[backendPlayer.position] || "QB",

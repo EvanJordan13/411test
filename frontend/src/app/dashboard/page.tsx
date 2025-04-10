@@ -22,7 +22,7 @@ export default function DashboardPage() {
   // Mock data will need to get real stuff eventually
   const trendingPlayers: Player[] = [
     {
-      id: 1,
+      id: "1",
       name: "Patrick Mahomes",
       team: "KC",
       position: "QB",
@@ -36,7 +36,7 @@ export default function DashboardPage() {
       trend: "up",
     },
     {
-      id: 2,
+      id: "2",
       name: "Travis Kelce",
       team: "KC",
       position: "TE",
@@ -50,7 +50,7 @@ export default function DashboardPage() {
       trend: "down",
     },
     {
-      id: 3,
+      id: "3",
       name: "Josh Allen",
       team: "BUF",
       position: "QB",
@@ -88,11 +88,12 @@ export default function DashboardPage() {
     },
   ];
 
-  const toggleFavorite = (playerId: number) => {
+  const toggleFavorite = (playerId: string) => {
+    const playerIdAsNumber = parseInt(playerId, 10);
     setFavorites((prev) =>
-      prev.includes(playerId)
-        ? prev.filter((id) => id !== playerId)
-        : [...prev, playerId]
+      prev.includes(playerIdAsNumber)
+        ? prev.filter((id) => id !== playerIdAsNumber)
+        : [...prev, playerIdAsNumber]
     );
   };
 
@@ -205,7 +206,7 @@ export default function DashboardPage() {
                           onClick={() => toggleFavorite(player.id)}
                           className="text-gray-400 hover:text-yellow-500"
                         >
-                          {favorites.includes(player.id) ? (
+                          {favorites.includes(Number(player.id)) ? (
                             <Star size={20} className="text-yellow-500" />
                           ) : (
                             <StarOff size={20} />

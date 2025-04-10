@@ -5,8 +5,8 @@ import type { Player } from "@/types";
 
 interface PlayerCardProps {
   player: Player;
-  favorites: number[];
-  onToggleFavorite: (playerId: number) => void;
+  favorites: string[];
+  onToggleFavorite: (player: Player) => void;
   showStats?: boolean;
   showNews?: boolean;
   className?: string;
@@ -20,6 +20,8 @@ export default function PlayerCard({
   showNews = false,
   className = "",
 }: PlayerCardProps) {
+  const isCurrentlyFavorite = favorites.includes(player.id);
+
   return (
     <div
       className={`bg-white rounded-xl shadow-sm overflow-hidden ${className}`}
@@ -37,7 +39,7 @@ export default function PlayerCard({
             </div>
           </div>
           <button
-            onClick={() => onToggleFavorite(player.id)}
+            onClick={() => onToggleFavorite(player)}
             className={`p-2 rounded-full transition-colors ${
               favorites.includes(player.id)
                 ? "bg-yellow-100 text-yellow-600"
@@ -45,7 +47,7 @@ export default function PlayerCard({
             }`}
           >
             {favorites.includes(player.id) ? (
-              <Star size={20} />
+              <Star size={20} className="fill-current text-yellow-500" />
             ) : (
               <StarOff size={20} />
             )}

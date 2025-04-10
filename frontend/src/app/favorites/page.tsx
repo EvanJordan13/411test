@@ -6,19 +6,19 @@ import Navbar from "@/components/layout/Navbar";
 import PlayerNoteCard from "@/components/ui/PlayerNoteCard";
 import Button from "@/components/ui/Button";
 import { useFavorites } from "@/lib/hooks/useFavorites";
+import { useAuth } from "@/lib/context/AuthContext";
 
 export default function FavoritesPage() {
-  // Replace with actual auth
-  const username = "currentUser";
+  const auth = useAuth();
 
   const { favorites, loading, error, updateNote, removeFavorite } =
-    useFavorites({ username });
+    useFavorites({});
 
-  const handleSaveNote = (playerId: number, note: string) => {
+  const handleSaveNote = (playerId: string, note: string) => {
     updateNote(playerId, note);
   };
 
-  const handleRemoveFromFavorites = (playerId: number) => {
+  const handleRemoveFromFavorites = (playerId: string) => {
     removeFavorite(playerId);
   };
 

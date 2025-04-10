@@ -2,7 +2,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Metadata } from "next";
 import AppProvider from "@/components/AppProvider";
-import ConnectionAlert from "@/components/ui/ConnectionAlert";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,10 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AppProvider>
-          {children}
-          <ConnectionAlert />
-        </AppProvider>
+        <AppProvider>{children}</AppProvider>
       </body>
     </html>
   );

@@ -70,11 +70,14 @@ export const userAPI = {
       body: JSON.stringify({ username }),
     }),
 
-  addFavorite: (username: string, playerId: string) =>
-    fetchAPI<any>(`/users/${username}/favorites`, {
+  addFavorite: (username: string, playerId: string) => {
+    const path = `/users/${username}/favorites?playerID=${encodeURIComponent(
+      playerId
+    )}`;
+    return fetchAPI<any>(path, {
       method: "POST",
-      body: JSON.stringify({ playerID: playerId }),
-    }),
+    });
+  },
 
   removeFavorite: (username: string, playerId: string) =>
     fetchAPI<any>(`/users/${username}/favorites/${playerId}`, {

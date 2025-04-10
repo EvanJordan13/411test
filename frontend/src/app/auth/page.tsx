@@ -14,7 +14,7 @@ export default function AuthPage() {
 
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
     confirmPassword: "",
   });
@@ -37,7 +37,7 @@ export default function AuthPage() {
 
     //validation
     const newErrors: Record<string, string> = {};
-    if (!formData.email) newErrors.email = "Email is required";
+    if (!formData.username) newErrors.username = "username is required";
     if (!formData.password) newErrors.password = "Password is required";
     if (!isLoginMode && formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
@@ -51,12 +51,12 @@ export default function AuthPage() {
 
     try {
       if (isLoginMode) {
-        // just use email for now
-        login(formData.email);
+        // just use username for now
+        login(formData.username);
       } else {
         // Register new user
-        await userAPI.createUser(formData.email);
-        login(formData.email);
+        await userAPI.createUser(formData.username);
+        login(formData.username);
       }
 
       // Redirect to dashboard on success
@@ -106,26 +106,26 @@ export default function AuthPage() {
             <div className="rounded-md shadow-sm space-y-4">
               <div>
                 <label
-                  htmlFor="email"
+                  htmlFor="username"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Email address
+                  Username
                 </label>
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
+                  id="username"
+                  name="username"
+                  type="username"
+                  autoComplete="username"
                   required
                   className={`mt-1 appearance-none rounded-lg relative block w-full px-3 py-2 border ${
-                    errors.email ? "border-red-300" : "border-gray-300"
+                    errors.username ? "border-red-300" : "border-gray-300"
                   } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                  placeholder="Email address"
-                  value={formData.email}
+                  placeholder="username address"
+                  value={formData.username}
                   onChange={handleChange}
                 />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                {errors.username && (
+                  <p className="mt-1 text-sm text-red-600">{errors.username}</p>
                 )}
               </div>
 

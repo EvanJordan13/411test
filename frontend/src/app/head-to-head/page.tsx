@@ -12,21 +12,6 @@ import { Player, NewsItem } from "@/types";
 import PlayerHeader from "@/components/comparison/PlayerHeader";
 import ScoreDisplay from "@/components/comparison/ScoreDisplay";
 
-const getMockNews = (playerId: number, playerName: string): NewsItem[] => [
-  {
-    id: playerId * 100 + 1,
-    title: `${playerName} performance analysis for the latest game`,
-    date: new Date().toISOString().split("T")[0],
-    source: "ProCompare Analytics",
-  },
-  {
-    id: playerId * 100 + 2,
-    title: `Coach comments on ${playerName}'s recent trend`,
-    date: new Date(Date.now() - 86400000).toISOString().split("T")[0],
-    source: "NFL News",
-  },
-];
-
 export default function HeadToHeadPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,15 +22,11 @@ export default function HeadToHeadPage() {
   const player2Id = searchParams.get("p2");
 
   const { comparePlayers, loading, error } = usePlayers();
-  const { favorites, toggleFavorite } = useFavorites({
-    username: "currentUser", //need actual auth
-    initialFavorites: [],
-  });
+  const { favorites, toggleFavorite } = useFavorites({});
 
   useEffect(() => {
     const loadPlayers = async () => {
       if (!player1Id || !player2Id) {
-        console.log("Player IDs missing from URL.");
         setPlayers([]);
         return;
       }
@@ -71,7 +52,7 @@ export default function HeadToHeadPage() {
     loadPlayers();
   }, [player1Id, player2Id, comparePlayers]);
 
-  const isFavorite = (playerId: number): boolean => {
+  const isFavorite = (playerId: string): boolean => {
     return Array.isArray(favorites) && favorites.some((f) => f.id === playerId);
   };
 
@@ -205,18 +186,15 @@ export default function HeadToHeadPage() {
         {/* news*/}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {players.map((player) => {
-            const playerNews =
-              player.recentNews && player.recentNews.length > 0
-                ? player.recentNews
-                : getMockNews(player.id, player.name);
+            const playerNews = player.recentNews;
 
             return (
               <div key={player.id} className="space-y-4">
                 <h3 className="text-xl font-semibold text-gray-900">
                   Latest News: {player.name}
                 </h3>
-                {playerNews.length > 0 ? (
-                  playerNews.map((news) => (
+                {playerNews!.length > 0 ? (
+                  playerNews!.map((news) => (
                     <div
                       key={news.id}
                       className="bg-white rounded-lg shadow p-4 border border-gray-100 hover:shadow-md transition-shadow duration-200"

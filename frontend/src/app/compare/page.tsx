@@ -27,17 +27,16 @@ export default function ComparePage() {
     "all"
   );
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
-  const [teams, setTeams] = useState<{ code: string; name: string }[]>([]);
+  const [teams, setTeams] = useState<
+    { id: number; code: string; name: string }[]
+  >([]);
   const [teamsLoading, setTeamsLoading] = useState(false);
 
   // Use custom hooks
   const { players, loading, error, fetchPlayers } = usePlayers({
     position: selectedPosition,
   });
-  const { favorites, toggleFavorite, isFavorite } = useFavorites({
-    username: "currentUser",
-    initialFavorites: [],
-  });
+  const { favorites, toggleFavorite, isFavorite } = useFavorites({});
 
   //search query from URL if present
   useEffect(() => {
@@ -168,7 +167,7 @@ export default function ComparePage() {
                 >
                   <option value="all">All Teams</option>
                   {teams.map((team) => (
-                    <option key={team.code} value={team.code}>
+                    <option key={team.id} value={team.code}>
                       {team.name}
                     </option>
                   ))}

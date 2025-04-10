@@ -1,5 +1,5 @@
 export interface Player {
-  id: number;
+  id: string;
   name: string;
   team: string;
   position: string;
@@ -8,10 +8,10 @@ export interface Player {
   trend: "up" | "down" | "stable";
   lastUpdated?: string;
   note?: string;
-  recentNews?: News[];
+  recentNews?: NewsItem[];
 }
 
-export interface News {
+export interface NewsItem {
   id: number;
   title: string;
   date: string;
