@@ -1,0 +1,80 @@
+/* app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: 221 83% 53%; /* blue-600 */
+  --primary-dark: 221 83% 43%; /* blue-700 */
+  --primary-light: 213 94% 68%; /* blue-400 */
+  --secondary: 47 95% 57%; /* yellow-400 */
+  --text-base: 220 9% 15%; /* gray-900 */
+  --text-muted: 220 9% 35%; /* gray-600 */
+  --bg-base: 0 0% 100%; /* white */
+  --bg-muted: 220 14% 96%; /* gray-100 */
+}
+
+@layer base {
+  body {
+    @apply text-gray-900 bg-gray-50;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-bold;
+  }
+
+  h1 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors;
+  }
+
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+  }
+
+  .btn-secondary {
+    @apply bg-blue-100 text-blue-800 hover:bg-blue-200;
+  }
+
+  .btn-outline {
+    @apply border border-gray-300 text-gray-700 hover:bg-gray-100;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm overflow-hidden;
+  }
+
+  .input {
+    @apply w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+
+  .badge {
+    @apply px-2 py-1 text-sm font-medium rounded-full;
+  }
+
+  .badge-blue {
+    @apply bg-blue-100 text-blue-800;
+  }
+
+  .badge-gray {
+    @apply bg-gray-100 text-gray-800;
+  }
+}
