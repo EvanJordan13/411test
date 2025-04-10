@@ -51,7 +51,8 @@ public class UserController {
      */
     @PostMapping("/users")
     public void createUser(@RequestParam String username) {
-        // TODO: Implement user creation logic.
+        String sql = "INSERT INTO Users (username) VALUES (?)";
+        jdbcTemplate.update(sql, username);
     }
 
     /**
@@ -61,7 +62,11 @@ public class UserController {
      */
     @DeleteMapping("/users/{username}")
     public void deleteUser(@PathVariable String username) {
-        // TODO: Implement user deletion logic.
+        String sqlFavorites = "DELETE FROM Favorites WHERE username = ?";
+        jdbcTemplate.update(sqlFavorites, username);
+
+        String sqlUser = "DELETE FROM Users WHERE username = ?";
+        jdbcTemplate.update(sqlUser, username);
     }
 
     /**
@@ -72,7 +77,8 @@ public class UserController {
      */
     @PostMapping("/users/{username}/favorites")
     public void addFavorite(@PathVariable String username, @RequestParam String playerID) {
-        // TODO: Implement add favorite logic.
+        String sql = "INSERT INTO Favorites (username, playerID) VALUES (?, ?)";
+        jdbcTemplate.update(sql, username, playerID);
     }
 
     /**
@@ -83,7 +89,8 @@ public class UserController {
      */
     @DeleteMapping("/users/{username}/favorites/{playerID}")
     public void deleteFavorite(@PathVariable String username, @PathVariable String playerID) {
-        // TODO: Implement delete favorite logic.
+        String sql = "DELETE FROM Favorites WHERE username = ? AND playerID = ?";
+        jdbcTemplate.update(sql, username, playerID);
     }
 
 }
