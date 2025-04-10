@@ -158,16 +158,9 @@ public class UserController {
     public void addFavorite(@PathVariable String username, @RequestParam String playerID) {
 
         String sql = "INSERT INTO Favorites (username, playerID) VALUES (?, ?)";
-        try {
-             // Capture the result of the update operation
-             int rowsAffected = jdbcTemplate.update(sql, username, playerID);
-             // ---> ADD THIS LOG <---
- 
-             // If rowsAffected is 0, it means the insert didn't happen for some reason (though constraints usually throw exceptions)
-             if (rowsAffected == 0) {
-                System.err.println("Backend Warning: INSERT into Favorites affected 0 rows. User: " + username + ", PlayerID: " + playerID);
-             }
-            //jdbcTemplate.update(sql, username, playerID);
+        try { 
+            
+             jdbcTemplate.update(sql, username, playerID);
 
         } catch (DuplicateKeyException e) {
             // Do nothing
