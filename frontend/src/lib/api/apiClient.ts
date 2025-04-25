@@ -70,6 +70,11 @@ export const userAPI = {
       body: JSON.stringify({ username }),
     }),
 
+  deleteUser: (username: string) =>
+    fetchAPI<{ success: boolean }>(`/users/${username}`, {
+      method: "DELETE",
+    }),
+
   addFavorite: (username: string, playerId: string) => {
     const path = `/users/${username}/favorites?playerID=${encodeURIComponent(
       playerId
