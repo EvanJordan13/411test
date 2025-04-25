@@ -91,13 +91,13 @@ public class UserController {
              throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found", e);
          }
  
-         // 2. Get the list of favorite player IDs for the user
+         //Get the list of favorite player IDs for the user
          String favoriteIdsSql = "SELECT playerID FROM Favorites WHERE username = ?";
          List<String> favoritePlayerIDs = jdbcTemplate.queryForList(favoriteIdsSql, String.class, username);
  
          List<Player> favoritePlayers = new ArrayList<>();
          if (!favoritePlayerIDs.isEmpty()) {
-             // 3. Fetch details for only the favorited players
+             //Fetch details for only the favorited players
              String fullFavoritesSql = """
                 SELECT p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score,
                 AVG(s.passYds) AS avgpassyds, AVG(s.passTDs) AS avgpasstds, AVG(s.ints) AS avgints, AVG(s.compPct) AS avgcomppct,
@@ -156,18 +156,10 @@ public class UserController {
      */
     @PostMapping("/users/{username}/favorites")
     public void addFavorite(@PathVariable String username, @RequestParam String playerID) {
-
         String sql = "INSERT INTO Favorites (username, playerID) VALUES (?, ?)";
-        try {
-             // Capture the result of the update operation
-             int rowsAffected = jdbcTemplate.update(sql, username, playerID);
-             // ---> ADD THIS LOG <---
- 
-             // If rowsAffected is 0, it means the insert didn't happen for some reason (though constraints usually throw exceptions)
-             if (rowsAffected == 0) {
-                System.err.println("Backend Warning: INSERT into Favorites affected 0 rows. User: " + username + ", PlayerID: " + playerID);
-             }
-            //jdbcTemplate.update(sql, username, playerID);
+        try { 
+            
+             jdbcTemplate.update(sql, username, playerID);
 
         } catch (DuplicateKeyException e) {
             // Do nothing

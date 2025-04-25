@@ -1,26 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
-import { userAPI } from "@/lib/api/apiClient"; // Adjust path if needed
-import { adaptPlayerData } from "@/lib/adapters/playerAdapter"; // Adjust path if needed
-import { Player, User } from "@/types"; // Adjust path if needed
-import { useAuth } from "@/lib/context/AuthContext"; // Adjust path if needed
+import { userAPI } from "@/lib/api/apiClient";
+import { adaptPlayerData } from "@/lib/adapters/playerAdapter";
+import { Player } from "@/types";
+import { useAuth } from "@/lib/context/AuthContext";
 
 interface UseFavoritesOptions {
   initialFavorites?: Player[];
 }
 
 export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
-  // Correctly destructure username directly from useAuth() based on AuthContextType
   const { username, isAuthenticated } = useAuth();
 
   const [favorites, setFavorites] = useState<Player[]>(initialFavorites);
-  // Initialize loading based on whether we expect to fetch (i.e., user is authenticated)
   const [loading, setLoading] = useState<boolean>(isAuthenticated);
   const [error, setError] = useState<string | null>(null);
 
   const [playerNotes, setPlayerNotes] = useState<Record<string, string>>({});
 
   const fetchFavorites = useCallback(async () => {
-    // Use the username from context
     if (!username) {
       setFavorites([]);
       setLoading(false);
@@ -41,7 +38,7 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
         setFavorites([]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError(err instanceof Error ? err.message : "erro");
       const storedFavorites = localStorage.getItem(`favorites_${username}`);
       if (storedFavorites) {
         try {
@@ -61,8 +58,7 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
     async (player: Player) => {
       if (!username) return;
 
-      // Optimistic update removed for simplicity, relying on fetch/storage
-      setLoading(true); // Indicate loading during API call
+      setLoading(true);
       setError(null);
 
       try {
@@ -79,7 +75,6 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
-        // Optionally revert optimistic update here if implemented
       } finally {
         setLoading(false);
       }
@@ -91,8 +86,7 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
     async (playerId: string) => {
       if (!username) return;
 
-      // Optimistic update removed for simplicity
-      setLoading(true); // Indicate loading during API call
+      setLoading(true);
       setError(null);
 
       try {
@@ -108,7 +102,6 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
-        // Optionally revert optimistic update here if implemented
       } finally {
         setLoading(false);
       }
@@ -125,14 +118,14 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
         addFavorite(player);
       }
     },
-    [favorites, addFavorite, removeFavorite] // Keep dependencies
+    [favorites, addFavorite, removeFavorite]
   );
 
   const isFavorite = useCallback(
     (playerId: string) => {
       return favorites.some((f) => f.id === playerId);
     },
-    [favorites] // Keep dependency
+    [favorites]
   );
 
   const updateNote = useCallback(
@@ -145,7 +138,7 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
         return newNotes;
       });
 
-      // Update note in the favorites state as well
+      // note in the favorites state as well
       setFavorites((prev) =>
         prev.map((p) =>
           p.id === playerId
@@ -158,19 +151,17 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
         )
       );
     },
-    [username] // Keep dependency
+    [username]
   );
 
   const getNote = useCallback(
     (playerId: string) => {
       return playerNotes[playerId] || "";
     },
-    [playerNotes] // Keep dependency
+    [playerNotes]
   );
 
   useEffect(() => {
-    // Fetch or clear based on authentication status / username presence
-
     if (username) {
       fetchFavorites();
       const storedNotes = localStorage.getItem(`notes_${username}`);
@@ -181,15 +172,15 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
           localStorage.removeItem(`notes_${username}`);
         }
       } else {
-        setPlayerNotes({}); // Ensure notes are cleared if nothing in storage
+        setPlayerNotes({});
       }
     } else {
       setFavorites([]);
       setPlayerNotes({});
-      setLoading(false); // Ensure loading is false if not authenticated
+      setLoading(false);
       setError(null);
     }
-  }, [username, fetchFavorites]); // Keep dependencies
+  }, [username, fetchFavorites]);
 
   return {
     favorites,

@@ -90,9 +90,7 @@ export default function AuthPage() {
               {isLoginMode ? "Welcome back" : "Create your account"}
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              {isLoginMode
-                ? "Sign in to your account"
-                : "Start your free trial"}
+              {isLoginMode ? "Sign in to your account" : ""}
             </p>
           </div>
 
@@ -120,7 +118,7 @@ export default function AuthPage() {
                   className={`mt-1 appearance-none rounded-lg relative block w-full px-3 py-2 border ${
                     errors.username ? "border-red-300" : "border-gray-300"
                   } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                  placeholder="username address"
+                  placeholder="username"
                   value={formData.username}
                   onChange={handleChange}
                 />
@@ -241,7 +239,7 @@ export default function AuthPage() {
                 onClick={() => {
                   setIsLoginMode(!isLoginMode);
                   setErrors({});
-                  // Update URL without reloading page
+                  // Update url
                   const newMode = isLoginMode ? "signup" : "login";
                   router.push(`/auth?mode=${newMode}`, { scroll: false });
                 }}

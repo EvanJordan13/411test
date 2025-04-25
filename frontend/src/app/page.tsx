@@ -25,21 +25,6 @@ const features = [
   },
 ];
 
-const testimonials = [
-  {
-    name: "Verfied User",
-    role: "Fantasy League Champion",
-    content:
-      "This tool gave me the edge I needed to win my fantasy league. The player comparisons are incredibly accurate!",
-  },
-  {
-    name: "Verfied User",
-    role: "Sports Analyst",
-    content:
-      "The depth of statistical analysis is impressive. It's become an essential part of my weekly research.",
-  },
-];
-
 export default function LandingPage() {
   return (
     <div className="min-h-screen">
@@ -147,46 +132,6 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Testimonials */}
-      <div className="bg-white py-16 lg:py-24">
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative">
-            <div className="text-center">
-              <h2 className="text-3xl tracking-tight font-extrabold text-gray-900 sm:text-4xl">
-                Trusted by Fantasy Champions
-              </h2>
-              <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
-                See what our users are saying about ProCompare
-              </p>
-            </div>
-            <div className="mt-12 max-w-lg mx-auto grid gap-5 lg:grid-cols-2 lg:max-w-none">
-              {testimonials.map((testimonial, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col rounded-lg shadow-lg overflow-hidden"
-                >
-                  <div className="flex-1 bg-white p-6 flex flex-col justify-between">
-                    <div className="flex-1">
-                      <p className="text-xl font-medium text-gray-900">
-                        &quot;{testimonial.content}&quot;
-                      </p>
-                    </div>
-                    <div className="mt-6">
-                      <p className="text-base font-medium text-gray-900">
-                        {testimonial.name}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {testimonial.role}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </div>

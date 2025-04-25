@@ -20,8 +20,6 @@ export default function PlayerCard({
   showNews = false,
   className = "",
 }: PlayerCardProps) {
-  const isCurrentlyFavorite = favorites.includes(player.id);
-
   return (
     <div
       className={`bg-white rounded-xl shadow-sm overflow-hidden ${className}`}
@@ -75,7 +73,7 @@ export default function PlayerCard({
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats */}
         {showStats && (
           <div className="grid grid-cols-2 gap-4 mb-6">
             {Object.entries(player.stats)
@@ -89,7 +87,7 @@ export default function PlayerCard({
           </div>
         )}
 
-        {/* Recent News */}
+        {/* news */}
         {showNews && player.recentNews && player.recentNews.length > 0 && (
           <div className="space-y-2">
             <h4 className="font-medium text-gray-900 mb-2">Recent News</h4>

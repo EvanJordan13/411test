@@ -32,7 +32,6 @@ export default function ComparePage() {
   >([]);
   const [teamsLoading, setTeamsLoading] = useState(false);
 
-  // Use custom hooks
   const { players, loading, error, fetchPlayers } = usePlayers({
     position: selectedPosition,
   });
