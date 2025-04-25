@@ -156,7 +156,10 @@ public class UserController {
      */
     @PostMapping("/users/{username}/favorites")
     public void addFavorite(@PathVariable String username, @RequestParam String playerID) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6d4dcf3ddf048ca624778d375a396505a20c379f
         String sql = "INSERT INTO Favorites (username, playerID) VALUES (?, ?)";
         try { 
             
