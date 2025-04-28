@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, ArrowDownUp, SortAsc, SortDesc } from "lucide-react";
+import { Plus, SortAsc, SortDesc } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import SearchBar from "@/components/ui/SearchBar";
 import PlayerCard from "@/components/ui/PlayerCard";
@@ -35,19 +35,16 @@ export default function ComparePage() {
   const initialPos = (searchParams.get("pos") as Position | "all") || "all";
   const initialTeam = searchParams.get("team") || "all";
 
-  // Local state for UI control
   const [currentPosition, setCurrentPosition] = useState<Position | "all">(
     initialPos
   );
   const [currentTeam, setCurrentTeam] = useState<string>(initialTeam);
 
-  // Use the hook, passing only relevant initial config
   const {
     players,
     loading,
     error,
     fetchPlayers,
-    // loadMore, // We will call fetchPlayers directly for loading more
     hasMore,
     page,
     setPage,
@@ -57,20 +54,17 @@ export default function ComparePage() {
     setSortDir,
     searchQuery,
     setSearchQuery,
-    teamFilter, // Keep hook's teamFilter state synced
+    teamFilter,
     setTeamFilter,
-    // No position or setPosition needed from hook
   } = usePlayers({
     initialSortBy: initialSortBy,
     initialSortDir: initialSortDir,
     initialSearchQuery: initialQuery,
-    initialTeamFilter: initialTeam, // Sync hook's initial state
-    // No initial position needed for hook
+    initialTeamFilter: initialTeam,
   });
 
   const { favorites, toggleFavorite, isFavorite } = useFavorites({});
 
-  // Sync hook's teamFilter state when local currentTeam changes
   useEffect(() => {
     setTeamFilter(currentTeam);
   }, [currentTeam, setTeamFilter]);
@@ -112,10 +106,9 @@ export default function ComparePage() {
 
   // Effect to refetch players when filters/sort change via UI elements
   useEffect(() => {
-    // Reset page to 1 when filters change
-    setPage(1); // Explicitly reset page state in hook
+    setPage(1);
     fetchPlayers(1, sortBy, sortDir, searchQuery, currentTeam, currentPosition);
-    updateURL(); // Update URL whenever filters/sort change
+    updateURL();
   }, [
     sortBy,
     sortDir,
@@ -125,9 +118,8 @@ export default function ComparePage() {
     fetchPlayers,
     updateURL,
     setPage,
-  ]); // Removed hook setters, added setPage
+  ]);
 
-  // Function to handle loading more players
   const handleLoadMore = () => {
     if (!loading && hasMore) {
       fetchPlayers(
@@ -236,7 +228,6 @@ export default function ComparePage() {
           ))}
         </div>
 
-        {/* Compare Button - Placed above search for better flow */}
         <div className="text-center mb-8">
           <Button
             onClick={handleCompare}
@@ -258,7 +249,7 @@ export default function ComparePage() {
           <SearchBar
             placeholder="Search players by name..."
             value={searchQuery}
-            onChange={setSearchQuery} // Use setter from hook directly
+            onChange={setSearchQuery}
             onFocus={() => setSearchFocus(true)}
             onBlur={() => setSearchFocus(false)}
           >
@@ -276,7 +267,7 @@ export default function ComparePage() {
                   <select
                     id="position-filter"
                     className="w-full p-2 rounded-lg border text-sm"
-                    value={currentPosition} // Use local UI state
+                    value={currentPosition}
                     onChange={(e) =>
                       setCurrentPosition(e.target.value as Position | "all")
                     }
@@ -300,7 +291,7 @@ export default function ComparePage() {
                   <select
                     id="team-filter"
                     className="w-full p-2 rounded-lg border text-sm"
-                    value={currentTeam} // Use local UI state
+                    value={currentTeam}
                     onChange={(e) => setCurrentTeam(e.target.value)}
                     disabled={teamsLoading}
                   >
@@ -356,7 +347,7 @@ export default function ComparePage() {
 
             {/* Search Results Area */}
             <div className="mt-2 max-h-96 overflow-y-auto">
-              {loading && page === 1 ? ( // Show loading only on initial page load for filters
+              {loading && page === 1 ? (
                 <div className="text-center py-4">
                   <p className="text-gray-500">Loading players...</p>
                 </div>
@@ -373,8 +364,8 @@ export default function ComparePage() {
                   {hasMore && (
                     <div className="pt-4 text-center">
                       <Button
-                        onClick={handleLoadMore} // Use updated handler
-                        disabled={loading} // Disable button while loading more
+                        onClick={handleLoadMore}
+                        disabled={loading}
                         variant="secondary"
                         size="sm"
                       >
@@ -386,7 +377,7 @@ export default function ComparePage() {
                     </div>
                   )}
                 </div>
-              ) : !loading ? ( // Only show "No players found" if not loading
+              ) : !loading ? (
                 <div className="text-center py-6 text-gray-500">
                   No players found matching your criteria.
                 </div>

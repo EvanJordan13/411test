@@ -52,7 +52,7 @@ export function useFavorites({
             localStorage.removeItem(`notes_${username}`);
           }
         }
-        setPlayerNotes(notesMap); // Set notes state
+        setPlayerNotes(notesMap);
 
         // Apply stored notes to adapted favorites
         const favoritesWithNotes = adaptedFavorites.map(
@@ -63,14 +63,13 @@ export function useFavorites({
         );
 
         setFavorites(favoritesWithNotes);
-        // Persist fetched favorites locally in case backend becomes unavailable later
         localStorage.setItem(
           `favorites_${username}`,
           JSON.stringify(favoritesWithNotes)
         );
       } else {
         setFavorites([]);
-        localStorage.removeItem(`favorites_${username}`); // Clear local cache if backend returns none
+        localStorage.removeItem(`favorites_${username}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error fetching favorites");
@@ -79,7 +78,6 @@ export function useFavorites({
       if (storedFavorites) {
         try {
           const parsedFavorites = JSON.parse(storedFavorites);
-          // Ensure notes are loaded even on fallback
           const storedNotes = localStorage.getItem(`notes_${username}`);
           let notesMap: Record<string, string> = {};
           if (storedNotes) {
@@ -109,17 +107,24 @@ export function useFavorites({
 
   const fetchFavoriteSummary = useCallback(
     async (position: string, stat: string) => {
-      if (!username) return;
+      if (!username || !position || !stat) return;
+
       setSummaryLoading(true);
       setSummaryError(null);
+      setFavoriteSummary([]);
+
       try {
         const summaryData = await userAPI.getFavoriteSummary(
           username,
           position,
           stat
         );
-        const adaptedSummary = summaryData.map(adaptFavoriteSummary);
-        setFavoriteSummary(adaptedSummary);
+        if (summaryData && Array.isArray(summaryData)) {
+          const adaptedSummary = summaryData.map(adaptFavoriteSummary);
+          setFavoriteSummary(adaptedSummary);
+        } else {
+          setFavoriteSummary([]);
+        }
       } catch (err) {
         setSummaryError(
           err instanceof Error ? err.message : "Error fetching favorite summary"
@@ -131,12 +136,10 @@ export function useFavorites({
     },
     [username]
   );
-
   const addFavorite = useCallback(
     async (player: Player) => {
       if (!username) return;
 
-      // Optimistic UI update
       const previousFavorites = favorites;
       const newOptimisticFavorites = [
         ...previousFavorites,
@@ -144,7 +147,7 @@ export function useFavorites({
       ];
       setFavorites(newOptimisticFavorites);
 
-      setLoading(true); // Use main loading indicator or a specific one?
+      setLoading(true);
       setError(null);
 
       try {
@@ -154,7 +157,6 @@ export function useFavorites({
           `favorites_${username}`,
           JSON.stringify(newOptimisticFavorites)
         );
-        // No need to setFavorites again if optimistic update worked
       } catch (err) {
         setError(
           err instanceof Error
@@ -171,7 +173,7 @@ export function useFavorites({
         setLoading(false);
       }
     },
-    [username, favorites, playerNotes] // Added dependencies
+    [username, favorites, playerNotes]
   );
 
   const removeFavorite = useCallback(
@@ -185,7 +187,7 @@ export function useFavorites({
       );
       setFavorites(newOptimisticFavorites);
 
-      setLoading(true); // Use main loading indicator or a specific one?
+      setLoading(true);
       setError(null);
 
       try {
@@ -195,7 +197,6 @@ export function useFavorites({
           `favorites_${username}`,
           JSON.stringify(newOptimisticFavorites)
         );
-        // No need to setFavorites again if optimistic update worked
       } catch (err) {
         setError(
           err instanceof Error
@@ -212,7 +213,7 @@ export function useFavorites({
         setLoading(false);
       }
     },
-    [username, favorites] // Added dependency
+    [username, favorites]
   );
 
   const toggleFavorite = useCallback(
@@ -229,7 +230,7 @@ export function useFavorites({
         addFavorite(playerWithNote);
       }
     },
-    [favorites, addFavorite, removeFavorite, playerNotes] // Added dependency
+    [favorites, addFavorite, removeFavorite, playerNotes]
   );
 
   const isFavorite = useCallback(
@@ -276,7 +277,7 @@ export function useFavorites({
         )
       );
     },
-    [username, playerNotes, favorites] // Added dependencies
+    [username, playerNotes, favorites]
   );
 
   const getNote = useCallback(
@@ -290,7 +291,6 @@ export function useFavorites({
   useEffect(() => {
     if (isAuthenticated && username) {
       fetchFavorites();
-      // Notes are now loaded within fetchFavorites after successful fetch or from cache on error
     } else {
       // Clear state if not authenticated or no username
       setFavorites([]);
@@ -301,7 +301,7 @@ export function useFavorites({
       setSummaryLoading(false);
       setSummaryError(null);
     }
-  }, [username, isAuthenticated, fetchFavorites]); // Rerun if auth state changes
+  }, [username, isAuthenticated, fetchFavorites]);
 
   return {
     favorites,
@@ -316,6 +316,6 @@ export function useFavorites({
     favoriteSummary,
     summaryLoading,
     summaryError,
-    fetchFavoriteSummary, // Expose the summary fetch function
+    fetchFavoriteSummary,
   };
 }

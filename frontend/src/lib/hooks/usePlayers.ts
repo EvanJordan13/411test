@@ -5,8 +5,7 @@ import { Player, Position, Team } from "@/types";
 
 interface UsePlayersOptions {
   initialPage?: number;
-  // Remove position prop from options, it's managed by the component
-  // position?: Position | "all";
+
   playerId?: string;
   teamId?: number;
   initialSortBy?: string;
@@ -17,17 +16,16 @@ interface UsePlayersOptions {
 
 export function usePlayers({
   initialPage = 1,
-  // position = "all", // Removed
   playerId,
   teamId,
-  initialSortBy = "score", // Default sort
+  initialSortBy = "score",
   initialSortDir = "DESC",
   initialSearchQuery = "",
   initialTeamFilter = "all",
 }: UsePlayersOptions = {}) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [player, setPlayer] = useState<Player | null>(null);
-  const [team, setTeam] = useState<Team | null>(null); // For team details
+  const [team, setTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState<number>(initialPage);
@@ -36,10 +34,8 @@ export function usePlayers({
   const [sortDir, setSortDir] = useState<"ASC" | "DESC">(initialSortDir);
   const [searchQuery, setSearchQuery] = useState<string>(initialSearchQuery);
   const [teamFilter, setTeamFilter] = useState<string>(initialTeamFilter);
-  // Removed internal position state: const [positionFilter, setPositionFilter] = useState<Position | "all">(position);
 
   const fetchPlayers = useCallback(
-    // Add positionFilter argument here
     async (
       pageNum: number = 1,
       currentSortBy = sortBy,
@@ -54,7 +50,7 @@ export function usePlayers({
       try {
         const data = await playerAPI.getPlayers(
           pageNum,
-          currentPositionFilter !== "all" ? currentPositionFilter : undefined, // Use argument
+          currentPositionFilter !== "all" ? currentPositionFilter : undefined,
           currentSearchQuery || undefined,
           currentTeamFilter !== "all" ? currentTeamFilter : undefined,
           currentSortBy || undefined,
@@ -66,8 +62,7 @@ export function usePlayers({
         setPlayers((prev) =>
           pageNum === 1 ? adaptedPlayers : [...prev, ...adaptedPlayers]
         );
-        // Assuming page size is consistent, adjust if backend signals differently
-        setHasMore(adaptedPlayers.length > 0); // Simple check, refine if backend provides total count
+        setHasMore(adaptedPlayers.length > 0);
         setPage(pageNum);
       } catch (err) {
         setError(
@@ -75,13 +70,12 @@ export function usePlayers({
             ? err.message
             : "An error occurred fetching players"
         );
-        setHasMore(false); // Stop loading more on error
+        setHasMore(false);
       } finally {
         setLoading(false);
       }
     },
-    // Removed position from dependencies as it's now passed directly
-    [sortBy, sortDir, searchQuery, teamFilter] // Dependencies that trigger refetch logic internally if needed
+    [sortBy, sortDir, searchQuery, teamFilter]
   );
 
   const fetchPlayerById = useCallback(async (id: string) => {
@@ -157,30 +151,9 @@ export function usePlayers({
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {
-      // Fetch next page with current filters/sorting state from the hook
-      // Need to get current position from component state somehow, or pass it here
-      // This design is a bit tricky. Maybe fetchPlayers should not depend on position state
-      // but *always* take it as an argument. Let's stick to that.
-      // The component calling loadMore needs to know the current position filter.
-      // Or, fetchPlayers *always* uses the component's state passed in its call.
-      // Let's assume the component calls fetchPlayers correctly in loadMore.
-      // The component needs access to the current position filter to pass it.
-      // This implies the component should manage the position filter state.
-      // The loadMore function here needs the current position. Passing it seems complex.
-
-      // Simpler: loadMore just increments the page. The component's useEffect handles the actual fetch
-      // based on state changes, including page potentially.
-      // Let's revert loadMore slightly - it only increments page state.
-      // setPage(prevPage => prevPage + 1); // Trigger fetch via useEffect watching page? Risky.
-
-      // Let's keep loadMore calling fetchPlayers, but it needs the position.
-      // The hook shouldn't manage position state. Component passes it.
       console.warn(
         "loadMore called, but requires current position filter from component context"
       );
-      // The calling component will need to call fetchPlayers(page + 1, ..., currentPosition) instead of loadMore().
-      // OR modify loadMore to accept the current position. Let's do that for simplicity here.
-      // fetchPlayers(page + 1, sortBy, sortDir, searchQuery, teamFilter, /* How to get position? */ );
     }
   }, [
     loading,
@@ -191,7 +164,7 @@ export function usePlayers({
     searchQuery,
     teamFilter,
     fetchPlayers,
-  ]); // Add fetchPlayers dependency
+  ]);
 
   // Effect to fetch initial data
   useEffect(() => {
@@ -200,24 +173,18 @@ export function usePlayers({
     } else if (teamId) {
       fetchTeamById(teamId);
     } else {
-      // Initial fetch - position needs to come from initial options somehow if hook managed it,
-      // but it doesn't anymore. The component's useEffect will handle the initial fetch.
-      // fetchPlayers(1, sortBy, sortDir, searchQuery, teamFilter, position); // position is not defined here
     }
-    // This useEffect might be redundant now if the component handles initial fetch based on its state.
-    // Let's remove the player list fetch from here. Component handles it.
-  }, [playerId, teamId, fetchPlayerById, fetchTeamById]); // Keep for ID-based fetching
+  }, [playerId, teamId, fetchPlayerById, fetchTeamById]);
 
   return {
     players,
     player,
-    team, // Expose team state
+    team,
     loading,
     error,
     hasMore,
     page,
-    setPage, // Expose setPage if needed for manual resets
-    // Expose filter/sort states and setters
+    setPage,
     sortBy,
     setSortBy,
     sortDir,
@@ -226,11 +193,10 @@ export function usePlayers({
     setSearchQuery,
     teamFilter,
     setTeamFilter,
-    // position: positionFilter, // Removed
-    loadMore, // Needs adjustment in component usage
-    fetchPlayers, // Allow manual refetch/reset
+    loadMore,
+    fetchPlayers,
     fetchPlayerById,
-    fetchTeamById, // Expose team fetch
+    fetchTeamById,
     comparePlayers,
   };
 }

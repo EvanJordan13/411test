@@ -1,19 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Star, BarChart2, Filter } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Star, BarChart2 } from "lucide-react";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import PlayerNoteCard from "@/components/ui/PlayerNoteCard";
 import Button from "@/components/ui/Button";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 import { useAuth } from "@/lib/context/AuthContext";
-import { Position } from "@/types"; // Assuming Position type is defined
+import { Position } from "@/types";
 
-// Mock possible stats for summary dropdown (Replace with actual relevant stats later)
 const summaryStatOptions: Record<
   string,
-  { label: string; backendValue: string }
+  { label: string; backendValue: string }[]
 > = {
   QB: [
     { label: "Passing Yards", backendValue: "passYds" },
@@ -52,38 +51,40 @@ export default function FavoritesPage() {
     fetchFavoriteSummary,
   } = useFavorites({});
 
-  const [summaryPosition, setSummaryPosition] = useState<Position | "ALL">(
+  // Local state only for controlling the dropdown selections
+  const [selectedPosition, setSelectedPosition] = useState<Position | "ALL">(
     "QB"
-  ); // Default to QB
-  const [summaryStat, setSummaryStat] = useState<string>(
-    summaryStatOptions["QB"]?.[0]?.backendValue || "passYds"
-  ); // Default to first QB stat
+  );
+  const [selectedStat, setSelectedStat] = useState<string>(
+    summaryStatOptions["QB"]?.[0]?.backendValue || ""
+  );
 
-  // Fetch summary when position or stat changes
   useEffect(() => {
-    if (auth.isAuthenticated && summaryPosition !== "ALL") {
-      fetchFavoriteSummary(summaryPosition, summaryStat);
+    if (auth.isAuthenticated && selectedPosition !== "ALL" && selectedStat) {
+      fetchFavoriteSummary(selectedPosition, selectedStat);
     }
   }, [
     auth.isAuthenticated,
-    summaryPosition,
-    summaryStat,
+    selectedPosition,
+    selectedStat,
     fetchFavoriteSummary,
   ]);
 
-  // Adjust available stats when position changes
-  useEffect(() => {
-    if (summaryPosition !== "ALL" && summaryStatOptions[summaryPosition]) {
-      const availableStats = summaryStatOptions[summaryPosition];
-      // If current stat not valid for new position, default to first stat for that position
-      if (!availableStats.some((opt) => opt.backendValue === summaryStat)) {
-        setSummaryStat(availableStats[0]?.backendValue || "");
-      }
+  const handlePositionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newPos = e.target.value as Position | "ALL";
+    setSelectedPosition(newPos);
+    // Immediately set the first valid stat for the new position
+    //his prevents triggering the useEffect fetch with an invalid combo
+    if (newPos !== "ALL" && summaryStatOptions[newPos]) {
+      setSelectedStat(summaryStatOptions[newPos][0]?.backendValue || "");
     } else {
-      // Handle 'ALL' or invalid position if needed, maybe clear stat?
-      // setSummaryStat('');
+      setSelectedStat("");
     }
-  }, [summaryPosition, summaryStat]);
+  };
+
+  const handleStatChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStat(e.target.value);
+  };
 
   const handleSaveNote = (playerId: string, note: string) => {
     updateNote(playerId, note);
@@ -93,16 +94,8 @@ export default function FavoritesPage() {
     removeFavorite(playerId);
   };
 
-  const handleSummaryPositionChange = (
-    e: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    setSummaryPosition(e.target.value as Position | "ALL");
-    // Stat selection will auto-adjust via useEffect
-  };
-
-  const handleSummaryStatChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSummaryStat(e.target.value);
-  };
+  const currentStatOptions =
+    selectedPosition !== "ALL" ? summaryStatOptions[selectedPosition] : [];
 
   if (favoritesLoading) {
     return (
@@ -154,78 +147,98 @@ export default function FavoritesPage() {
                 </label>
                 <select
                   id="summary-pos"
-                  value={summaryPosition}
-                  onChange={handleSummaryPositionChange}
+                  value={selectedPosition}
+                  onChange={handlePositionChange}
                   className="p-2 rounded-lg border text-sm"
                 >
-                  {/* <option value="ALL">All</option> */}
                   <option value="QB">QB</option>
                   <option value="RB">RB</option>
                   <option value="WR">WR</option>
                   <option value="TE">TE</option>
                 </select>
               </div>
-              {summaryPosition !== "ALL" &&
-                summaryStatOptions[summaryPosition] && (
-                  <div>
-                    <label
-                      htmlFor="summary-stat"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Stat
-                    </label>
-                    <select
-                      id="summary-stat"
-                      value={summaryStat}
-                      onChange={handleSummaryStatChange}
-                      className="p-2 rounded-lg border text-sm"
-                    >
-                      {summaryStatOptions[summaryPosition].map((opt) => (
-                        <option key={opt.backendValue} value={opt.backendValue}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+              <div>
+                <label
+                  htmlFor="summary-stat"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Stat
+                </label>
+                <select
+                  id="summary-stat"
+                  value={selectedStat}
+                  onChange={handleStatChange}
+                  className="p-2 rounded-lg border text-sm"
+                  disabled={
+                    selectedPosition === "ALL" ||
+                    !currentStatOptions ||
+                    currentStatOptions.length === 0
+                  }
+                >
+                  {currentStatOptions?.map((opt) => (
+                    <option key={opt.backendValue} value={opt.backendValue}>
+                      {opt.label}
+                    </option>
+                  ))}
+                  {(!currentStatOptions || currentStatOptions.length === 0) && (
+                    <option value="">N/A</option>
+                  )}
+                </select>
+              </div>
             </div>
 
-            {/* Summary Display */}
-            {summaryLoading ? (
-              <div className="text-center py-4 text-gray-500">
-                Loading summary...
-              </div>
-            ) : summaryError ? (
-              <div className="text-center py-4 text-red-500">
-                Error loading summary: {summaryError}
-              </div>
-            ) : favoriteSummary.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {favoriteSummary.map((item, index) => (
-                  <div
-                    key={index}
-                    className="bg-blue-50 p-4 rounded-lg text-center"
-                  >
-                    <div className="text-xs font-medium text-blue-700 uppercase mb-1">
-                      {item.tier}
+            {/* Summary Display*/}
+            <div className="mt-4 min-h-[80px]">
+              {" "}
+              {summaryLoading ? (
+                <div className="text-center py-4 text-gray-500">
+                  Loading summary...
+                </div>
+              ) : summaryError ||
+                !favoriteSummary ||
+                favoriteSummary.length === 0 ? (
+                // Display N/A grid if error or no data returned from backend
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 opacity-60">
+                  {["High", "Mid", "Low"].map((tier) => (
+                    <div
+                      key={tier}
+                      className="bg-gray-100 p-4 rounded-lg text-center border border-dashed border-gray-300"
+                    >
+                      <div className="text-xs font-medium text-gray-500 uppercase mb-1">
+                        {tier} Tier
+                      </div>
+                      <div className="text-3xl font-bold text-gray-400">
+                        N/A
+                      </div>
+                      <div className="text-sm text-gray-500">Players</div>
                     </div>
-                    <div className="text-3xl font-bold text-blue-900">
-                      {item.count}
+                  ))}
+                </div>
+              ) : (
+                // Display actual summary data only if loading is false, no error, and data exists
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {favoriteSummary.map((item, index) => (
+                    <div
+                      key={index}
+                      className="bg-blue-50 p-4 rounded-lg text-center"
+                    >
+                      <div className="text-xs font-medium text-blue-700 uppercase mb-1">
+                        {item.tier} Tier
+                      </div>
+                      <div className="text-3xl font-bold text-blue-900">
+                        {item.count}
+                      </div>
+                      <div className="text-sm text-blue-700">Players</div>
                     </div>
-                    <div className="text-sm text-blue-700">Players</div>
-                  </div>
-                ))}
-              </div>
-            ) : !summaryLoading ? ( // Avoid showing "No summary" while loading
-              <div className="text-center py-4 text-gray-500">
-                No summary data available for this selection.
-              </div>
-            ) : null}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {/* Favorite Players List */}
-        {favorites.length === 0 && !favoritesLoading ? ( // Ensure not loading before showing "No favorites"
+        {favorites.length === 0 && !favoritesLoading ? (
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
               <Star className="text-gray-400" size={24} />

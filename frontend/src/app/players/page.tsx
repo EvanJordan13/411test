@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Filter, SortAsc, SortDesc } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Button from "@/components/ui/Button";
-import PlayerSearchResult from "@/components/ui/PlayerSearchResult"; // Reuse for list item display
+import PlayerSearchResult from "@/components/ui/PlayerSearchResult";
 import { usePlayers } from "@/lib/hooks/usePlayers";
 import { Player, Position } from "@/types";
 import { teamAPI } from "@/lib/api/apiClient";
@@ -16,13 +16,11 @@ export default function PlayersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // State for team dropdown
   const [teams, setTeams] = useState<
     { id: number; code: string; name: string }[]
   >([]);
   const [teamsLoading, setTeamsLoading] = useState(false);
 
-  // Initialize filter/sort states from URL or defaults
   const initialQuery = searchParams.get("q") || "";
   const initialSortBy = searchParams.get("sortBy") || "score";
   const initialSortDir =
@@ -30,7 +28,6 @@ export default function PlayersPage() {
   const initialPos = (searchParams.get("pos") as Position | "all") || "all";
   const initialTeam = searchParams.get("team") || "all";
 
-  // Local state for UI controls, will sync with hook
   const [currentPosition, setCurrentPosition] = useState<Position | "all">(
     initialPos
   );
@@ -50,40 +47,34 @@ export default function PlayersPage() {
     setSortDir,
     searchQuery,
     setSearchQuery,
-    teamFilter, // Hook manages team filter based on prop
+    teamFilter,
     setTeamFilter,
-    // position filter managed by component state (currentPosition)
-    loadMore, // We need to implement the call correctly
+    loadMore,
   } = usePlayers({
     initialSortBy: initialSortBy,
     initialSortDir: initialSortDir,
     initialSearchQuery: initialQuery,
     initialTeamFilter: initialTeam,
-    // position prop removed from hook options
   });
 
-  // Debounce search query
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 300); // 300ms debounce
+    }, 300);
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Update URL when filters/sort change
   const updateURL = useCallback(() => {
     const params = new URLSearchParams();
-    if (searchQuery) params.set("q", searchQuery); // Use 'q' for query param
+    if (searchQuery) params.set("q", searchQuery);
     if (sortBy !== "score") params.set("sortBy", sortBy);
     if (sortDir !== "DESC") params.set("sortDir", sortDir);
     if (currentPosition !== "all") params.set("pos", currentPosition);
     if (currentTeam !== "all") params.set("team", currentTeam);
-    // params.set("page", page.toString()); // Optionally track page in URL
     router.replace(`/players?${params.toString()}`, { scroll: false });
   }, [searchQuery, sortBy, sortDir, currentPosition, currentTeam, router]);
 
-  // Fetch teams for the dropdown
   useEffect(() => {
     const fetchTeamsData = async () => {
       setTeamsLoading(true);
@@ -100,9 +91,8 @@ export default function PlayersPage() {
     fetchTeamsData();
   }, []);
 
-  // Effect to refetch players when filters/sort/search change
   useEffect(() => {
-    setPage(1); // Reset page number on filter/sort change
+    setPage(1);
     fetchPlayers(
       1,
       sortBy,
@@ -123,21 +113,14 @@ export default function PlayersPage() {
     setPage,
   ]);
 
-  // Sync hook's teamFilter state when local currentTeam changes
   useEffect(() => {
     setTeamFilter(currentTeam);
   }, [currentTeam, setTeamFilter]);
 
-  // Sync local team state if hook's teamFilter changes (e.g. back button)
-  useEffect(() => {
-    // This might cause issues if hook updates from URL before local state
-    // setCurrentTeam(teamFilter);
-  }, [teamFilter]);
+  useEffect(() => {}, [teamFilter]);
 
-  // Handler for Load More button
   const handleLoadMore = () => {
     if (!loading && hasMore) {
-      // Call fetchPlayers for the next page with current filters/sort
       fetchPlayers(
         page + 1,
         sortBy,
@@ -154,12 +137,10 @@ export default function PlayersPage() {
       setSortDir((prev) => (prev === "ASC" ? "DESC" : "ASC"));
     } else {
       setSortBy(newSortBy);
-      setSortDir("DESC"); // Default to DESC for new column
+      setSortDir("DESC");
     }
-    // Fetching is handled by the useEffect watching sortBy/sortDir
   };
 
-  // Sync local search input with hook state
   useEffect(() => {
     setSearchQuery(debouncedSearchQuery);
   }, [debouncedSearchQuery, setSearchQuery]);
@@ -170,7 +151,6 @@ export default function PlayersPage() {
     { value: "playerAge", label: "Age" },
     { value: "numGames", label: "Games Played" },
     { value: "numSeasons", label: "Seasons" },
-    // Add stats later if needed e.g. { value: 'avgPassYds', label: 'Pass Yds (Avg)'}
   ];
 
   return (
@@ -178,7 +158,6 @@ export default function PlayersPage() {
       <Navbar />
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">NFL Players</h1>
           <p className="mt-2 text-gray-600">
@@ -189,10 +168,8 @@ export default function PlayersPage() {
           )}
         </div>
 
-        {/* Filters and Sort Controls */}
         <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-            {/* Search Input */}
             <div className="md:col-span-2">
               <label
                 htmlFor="player-search"
@@ -218,7 +195,6 @@ export default function PlayersPage() {
               </div>
             </div>
 
-            {/* Position Filter */}
             <div>
               <label
                 htmlFor="position-filter"
@@ -242,7 +218,6 @@ export default function PlayersPage() {
               </select>
             </div>
 
-            {/* Team Filter */}
             <div>
               <label
                 htmlFor="team-filter"
@@ -266,10 +241,7 @@ export default function PlayersPage() {
               </select>
             </div>
 
-            {/* Sort Control */}
             <div className="md:col-span-4">
-              {" "}
-              {/* Span full width on mobile, adjust as needed */}
               <label
                 htmlFor="sort-by"
                 className="block text-sm font-medium text-gray-700 mb-1"
@@ -307,38 +279,26 @@ export default function PlayersPage() {
           </div>
         </div>
 
-        {/* Players List */}
-        {loading && page === 1 ? ( // Show spinner only on initial load/filter change
+        {loading && page === 1 ? (
           <div className="text-center py-10">
             <p className="text-gray-500">Loading players...</p>
-            {/* Optional: Add spinner */}
           </div>
         ) : players.length > 0 ? (
           <div className="space-y-2">
-            {/* Display players using PlayerSearchResult component */}
             {players.map((p) => (
-              // PlayerSearchResult is clickable itself for selection actions if needed,
-              // but here we just use it for display and link internally
               <div
                 key={p.id}
                 className="bg-white shadow sm:rounded-md overflow-hidden"
               >
-                {/* We don't need the onSelect prop here */}
-                <PlayerSearchResult
-                  player={p}
-                  onSelect={() => {
-                    /* No action needed on select here */
-                  }}
-                />
+                <PlayerSearchResult player={p} onSelect={() => {}} />
               </div>
             ))}
 
-            {/* Load More Button */}
             {hasMore && (
               <div className="pt-6 text-center">
                 <Button
                   onClick={handleLoadMore}
-                  disabled={loading} // Disable button only when loading *more*
+                  disabled={loading}
                   variant="secondary"
                   size="md"
                 >
@@ -347,7 +307,7 @@ export default function PlayersPage() {
               </div>
             )}
           </div>
-        ) : !loading ? ( // Only show if not initial loading
+        ) : !loading ? (
           <div className="text-center py-10 bg-white rounded-md shadow">
             <p className="text-gray-500">
               No players found matching your criteria.

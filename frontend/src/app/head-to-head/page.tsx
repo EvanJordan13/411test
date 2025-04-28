@@ -17,7 +17,6 @@ export default function HeadToHeadPage() {
   const searchParams = useSearchParams();
   const [players, setPlayers] = useState<Player[]>([]);
 
-  // id from url
   const player1Id = searchParams.get("p1");
   const player2Id = searchParams.get("p2");
 
@@ -30,7 +29,7 @@ export default function HeadToHeadPage() {
         setPlayers([]);
         return;
       }
-      setPlayers([]); //reset prefetch
+      setPlayers([]);
 
       try {
         const comparedPlayers = await comparePlayers(player1Id, player2Id);

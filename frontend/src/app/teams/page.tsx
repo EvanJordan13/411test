@@ -24,7 +24,6 @@ export default function TeamsPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // State for filtering and sorting
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [sortBy, setSortBy] = useState(
     searchParams.get("sortBy") || "teamStrength"
@@ -33,12 +32,11 @@ export default function TeamsPage() {
     (searchParams.get("sortDir") as "ASC" | "DESC") || "DESC"
   );
 
-  // Debounce search query
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => {
       clearTimeout(handler);
@@ -71,7 +69,6 @@ export default function TeamsPage() {
     [debouncedSearchQuery, sortBy, sortDir]
   );
 
-  // Update URL when filters/sort change
   const updateURL = useCallback(() => {
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
@@ -80,7 +77,6 @@ export default function TeamsPage() {
     router.replace(`/teams?${params.toString()}`, { scroll: false });
   }, [searchQuery, sortBy, sortDir, router]);
 
-  // Fetch teams on initial load and when filters/sort change
   useEffect(() => {
     fetchTeams(debouncedSearchQuery, sortBy, sortDir);
     updateURL();
@@ -91,14 +87,13 @@ export default function TeamsPage() {
       setSortDir((prev) => (prev === "ASC" ? "DESC" : "ASC"));
     } else {
       setSortBy(newSortBy);
-      setSortDir("DESC"); // Default to DESC for new column
+      setSortDir("DESC");
     }
   };
 
   const sortOptions = [
     { value: "teamName", label: "Team Name" },
     { value: "teamStrength", label: "Team Strength" },
-    // Add more if backend supports them
   ];
 
   return (
@@ -106,7 +101,6 @@ export default function TeamsPage() {
       <Navbar />
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">NFL Teams</h1>
           <p className="mt-2 text-gray-600">
@@ -117,9 +111,7 @@ export default function TeamsPage() {
           )}
         </div>
 
-        {/* Search and Sort Controls */}
         <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Search Input */}
           <div className="md:col-span-2">
             <label htmlFor="team-search" className="sr-only">
               Search Teams
@@ -139,7 +131,6 @@ export default function TeamsPage() {
             </div>
           </div>
 
-          {/* Sort Control */}
           <div>
             <label htmlFor="sort-by" className="sr-only">
               Sort By
@@ -174,11 +165,9 @@ export default function TeamsPage() {
           </div>
         </div>
 
-        {/* Teams List */}
         {loading ? (
           <div className="text-center py-10">
             <p className="text-gray-500">Loading teams...</p>
-            {/* Optional: Add spinner */}
           </div>
         ) : teams.length > 0 ? (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">

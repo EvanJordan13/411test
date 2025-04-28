@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link"; // Import Link
+import Link from "next/link";
 import { Star, Pencil, Trash, X, Save, AlertCircle } from "lucide-react";
 import type { Player } from "@/types";
 
@@ -37,8 +37,7 @@ export default function PlayerNoteCard({
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-center space-x-2">
-              {/* Wrap name in Link */}
-              <Link href={`/player/${player.id}`} className="hover:underline">
+              <Link href={`/players/${player.id}`} className="hover:underline">
                 <h3 className="text-lg font-bold text-gray-900 inline-block">
                   {player.name}
                 </h3>
@@ -65,7 +64,6 @@ export default function PlayerNoteCard({
           <div className="text-sm font-medium text-gray-700">
             Personal Notes
           </div>
-          {/* Hide last updated if no note and not editing */}
           {(isEditing || player.note) && player.lastUpdated && (
             <div className="text-xs text-gray-500">
               Updated: {player.lastUpdated}
@@ -103,7 +101,6 @@ export default function PlayerNoteCard({
           <div className="flex-grow flex flex-col justify-between">
             <div className="text-gray-600 text-sm mb-3 overflow-y-auto max-h-24 flex-grow">
               {" "}
-              {/* Added scroll */}
               {player.note ? (
                 <p className="whitespace-pre-wrap break-words">{player.note}</p>
               ) : (

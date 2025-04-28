@@ -18,19 +18,19 @@ import Navbar from "@/components/layout/Navbar";
 import Button from "@/components/ui/Button";
 import { usePlayers } from "@/lib/hooks/usePlayers";
 import { useFavorites } from "@/lib/hooks/useFavorites";
-import { Player, NewsItem } from "@/types"; // Assuming NewsItem is defined correctly
+import { Player, NewsItem } from "@/types";
 
 export default function PlayerDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const playerId = params.playerId as string; // Get player ID from URL
+  const playerId = params.playerId as string;
 
   const {
     player,
     loading: playerLoading,
     error: playerError,
     fetchPlayerById,
-  } = usePlayers({ playerId }); // Use hook configured for fetching a single player
+  } = usePlayers({ playerId });
 
   const {
     favorites,
@@ -38,27 +38,23 @@ export default function PlayerDetailPage() {
     isFavorite,
     updateNote,
     getNote,
-    loading: favoritesLoading, // Use favorites loading state if needed
+    loading: favoritesLoading,
   } = useFavorites({});
 
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteText, setNoteText] = useState("");
 
-  // Fetch player data when ID changes
   useEffect(() => {
     if (playerId) {
       fetchPlayerById(playerId);
     }
   }, [playerId, fetchPlayerById]);
 
-  // Load note when player data or favorites state is available
   useEffect(() => {
     if (player) {
-      // Assuming getNote correctly gets the note from its internal state/storage
       setNoteText(getNote(player.id));
     }
-  }, [player, getNote]); // Rerun if player data changes
-
+  }, [player, getNote]);
   const handleSaveNote = () => {
     if (player) {
       updateNote(player.id, noteText);
@@ -68,7 +64,7 @@ export default function PlayerDetailPage() {
 
   const handleCancelEditNote = () => {
     if (player) {
-      setNoteText(getNote(player.id)); // Reset to original note
+      setNoteText(getNote(player.id));
     }
     setIsEditingNote(false);
   };
@@ -98,7 +94,7 @@ export default function PlayerDetailPage() {
               {playerError || "Could not load player details."}
             </div>
             <Button
-              onClick={() => router.back()} // Go back to previous page
+              onClick={() => router.back()}
               variant="primary"
               icon={<ArrowLeft size={20} />}
             >
@@ -110,7 +106,6 @@ export default function PlayerDetailPage() {
     );
   }
 
-  // Player data is available
   const isFav = isFavorite(player.id);
 
   return (

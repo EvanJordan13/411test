@@ -54,12 +54,11 @@ export function adaptPlayerData(backendPlayer: any): Player {
     team: backendPlayer.teamName || "UNK",
     position: positionMap[backendPlayer.position] || "QB",
     stats: stats,
-    mlScore: Math.round(backendPlayer.score || 0), // Default score to 0
+    mlScore: Math.round(backendPlayer.score || 0),
     trend: trend,
     lastUpdated: new Date().toISOString().split("T")[0],
-    note: "", // Notes managed client-side for now
-    recentNews: mockRecentNews, // Use mock news
-    // Include additional backend fields if needed
+    note: "",
+    recentNews: mockRecentNews,
     playerAge: backendPlayer.playerAge,
     numSeasons: backendPlayer.numSeasons,
     numGames: backendPlayer.numGames,
@@ -108,7 +107,6 @@ export function adaptTeamData(backendTeam: any): Team {
       backendTeam.teamStrength !== undefined
         ? parseFloat(backendTeam.teamStrength.toFixed(1))
         : 0,
-    // Add adapted top players
     topQB,
     topRB,
     topWR,
@@ -166,7 +164,7 @@ function getTeamCode(teamName: string): string {
   );
 }
 
-// Adapts favorite summary data
+//favorite summary data
 export interface FavoriteSummaryData {
   tier: string;
   count: number;

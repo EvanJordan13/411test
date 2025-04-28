@@ -5,10 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Users, ShieldCheck, Star } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Button from "@/components/ui/Button";
-import { usePlayers } from "@/lib/hooks/usePlayers"; // Reusing hook for team fetching part
-import PlayerCard from "@/components/ui/PlayerCard"; // Reuse player card for top players
+import { usePlayers } from "@/lib/hooks/usePlayers";
+import TopPlayerCard from "@/components/ui/TopPlayerCard";
 import { Player, Team } from "@/types";
-import { useFavorites } from "@/lib/hooks/useFavorites"; // Needed for favorite toggle on player cards
+import { useFavorites } from "@/lib/hooks/useFavorites";
 
 export default function TeamDetailPage() {
   const router = useRouter();
@@ -18,31 +18,29 @@ export default function TeamDetailPage() {
     : undefined;
 
   const {
-    team, // Get team details from the hook
+    team,
     loading: teamLoading,
     error: teamError,
     fetchTeamById,
-  } = usePlayers({ teamId: teamId }); // Use the hook configured for fetching a team
+  } = usePlayers({ teamId: teamId });
 
   // Use favorites hook to manage favorite status on displayed player cards
-  const { favorites, toggleFavorite } = useFavorites({});
+  const { favorites, toggleFavorite, isFavorite } = useFavorites({});
 
   useEffect(() => {
     if (teamId && !isNaN(teamId)) {
       fetchTeamById(teamId);
     } else {
-      // Handle invalid or missing ID
       console.error("Invalid team ID");
-      // Optionally redirect or show an error message
     }
   }, [teamId, fetchTeamById]);
 
   const topPlayers = [
-    { position: "QB", player: team?.topQB },
-    { position: "RB", player: team?.topRB },
-    { position: "WR", player: team?.topWR },
-    { position: "TE", player: team?.topTE },
-  ].filter((p) => p.player) as { position: string; player: Player }[]; // Filter out undefined players
+    { positionLabel: "Quarterback", player: team?.topQB },
+    { positionLabel: "Running Back", player: team?.topRB },
+    { positionLabel: "Wide Receiver", player: team?.topWR },
+    { positionLabel: "Tight End", player: team?.topTE },
+  ].filter((p) => !!p.player) as { positionLabel: string; player: Player }[];
 
   if (teamLoading) {
     return (
@@ -97,39 +95,34 @@ export default function TeamDetailPage() {
         </div>
 
         {/* Team Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl shadow-lg p-8 mb-8 flex items-center justify-between">
-          <div>
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl shadow-lg p-8 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-center sm:text-left">
             <h1 className="text-4xl font-bold mb-1">{team.name}</h1>
             <span className="text-xl font-medium opacity-90">
               ({team.code})
             </span>
           </div>
-          <div className="text-right">
+          <div className="text-center sm:text-right">
             <p className="text-lg opacity-80">Team Strength</p>
             <p className="text-5xl font-bold">{team.strength ?? "N/A"}</p>
           </div>
         </div>
 
-        {/* Top Players Section */}
+        {/* Top Players Section*/}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center sm:text-left">
             Top Players by Position
           </h2>
           {topPlayers.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {topPlayers.map(({ position, player }) => (
-                <div key={player.id}>
-                  <div className="text-center mb-2 font-semibold text-gray-700">
-                    {position}
-                  </div>
-                  <PlayerCard
-                    player={player}
-                    favorites={favorites.map((f) => f.id)}
-                    onToggleFavorite={toggleFavorite}
-                    showStats={false} // Keep card simple
-                    className="h-full"
-                  />
-                </div>
+              {topPlayers.map(({ positionLabel, player }) => (
+                <TopPlayerCard
+                  key={player.id}
+                  player={player}
+                  positionLabel={positionLabel}
+                  isFavorite={isFavorite(player.id)}
+                  onToggleFavorite={() => toggleFavorite(player)}
+                />
               ))}
             </div>
           ) : (
@@ -138,12 +131,6 @@ export default function TeamDetailPage() {
             </div>
           )}
         </div>
-
-        {/* Placeholder for more team stats or info if added later */}
-        {/* <div className="bg-white rounded-xl shadow p-6">
-             <h3 className="text-xl font-bold text-gray-800 mb-4">Additional Team Info</h3>
-             <p className="text-gray-600">More team details could go here...</p>
-         </div> */}
       </main>
     </div>
   );
