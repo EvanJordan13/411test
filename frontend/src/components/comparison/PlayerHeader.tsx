@@ -1,5 +1,5 @@
 import React from "react";
-import Link from "next/link"; // Import Link
+import Link from "next/link";
 import { Star, StarOff } from "lucide-react";
 import { Player } from "@/types";
 
@@ -25,8 +25,7 @@ const PlayerHeader: React.FC<PlayerHeaderProps> = ({
           <>
             {/* left player */}
             <div className="text-right">
-              {/* Wrap name in Link */}
-              <Link href={`/player/${player.id}`} className="hover:underline">
+              <Link href={`/players/${player.id}`} className="hover:underline">
                 <h2 className="text-xl font-bold text-gray-900 inline-block">
                   {player.name}
                 </h2>
@@ -85,8 +84,7 @@ const PlayerHeader: React.FC<PlayerHeaderProps> = ({
             </button>
             {/* right player */}
             <div>
-              {/* Wrap name in Link */}
-              <Link href={`/player/${player.id}`} className="hover:underline">
+              <Link href={`/players/${player.id}`} className="hover:underline">
                 <h2 className="text-xl font-bold text-gray-900 inline-block">
                   {player.name}
                 </h2>

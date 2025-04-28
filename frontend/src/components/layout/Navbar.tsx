@@ -12,7 +12,8 @@ import {
   LogOut,
   AlertCircle,
   Trash2,
-  Users, // Added for Teams icon potentially
+  Users,
+  UserSearch,
 } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { userAPI } from "@/lib/api/apiClient";
@@ -36,8 +37,8 @@ export default function Navbar() {
   ];
 
   const isActive = (path: string) => {
-    // Make /teams active if path starts with /teams/
     if (path === "/teams" && pathname.startsWith("/teams")) return true;
+    if (path === "/players" && pathname.startsWith("/player")) return true;
     if (path === "/dashboard" && pathname === "/") return isAuthenticated;
     return pathname === path;
   };
@@ -54,9 +55,7 @@ export default function Navbar() {
     setIsDeleting(true);
     setDeleteError(null);
     try {
-      // Assuming deleteUser returns { success: boolean } or throws on failure
       await userAPI.deleteUser(username);
-      // If deletion was successful:
       closeAllPopups();
       logout();
       router.push("/");
@@ -103,6 +102,16 @@ export default function Navbar() {
                     Dashboard
                   </Link>
                   <Link
+                    href="/players"
+                    className={`text-sm font-medium ${
+                      isActive("/players")
+                        ? "text-blue-600"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    Players
+                  </Link>
+                  <Link
                     href="/compare"
                     className={`text-sm font-medium ${
                       isActive("/compare")
@@ -112,7 +121,6 @@ export default function Navbar() {
                   >
                     Compare
                   </Link>
-                  {/* Added Teams Link */}
                   <Link
                     href="/teams"
                     className={`text-sm font-medium ${
@@ -248,6 +256,17 @@ export default function Navbar() {
                     Dashboard
                   </Link>
                   <Link
+                    href="/players"
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${
+                      isActive("/players")
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
+                    onClick={closeAllPopups}
+                  >
+                    Players
+                  </Link>
+                  <Link
                     href="/compare"
                     className={`block px-3 py-2 rounded-md text-base font-medium ${
                       isActive("/compare")
@@ -258,7 +277,6 @@ export default function Navbar() {
                   >
                     Compare
                   </Link>
-                  {/* Added Teams Link Mobile */}
                   <Link
                     href="/teams"
                     className={`block px-3 py-2 rounded-md text-base font-medium ${
@@ -310,7 +328,6 @@ export default function Navbar() {
                     <div className="text-base font-medium text-gray-800">
                       {username}
                     </div>
-                    {/* <div className="text-sm font-medium text-gray-500">user@example.com</div> */}
                   </div>
                   {/* Mobile notifications button */}
                   <button
@@ -324,8 +341,7 @@ export default function Navbar() {
                     )}
                   </button>
                 </div>
-                {/* Mobile notifications dropdown (could reuse desktop one if positioned correctly, or build separate mobile version) */}
-                {/* Simplified: Just showing actions */}
+
                 <div className="mt-3 px-2 space-y-1 sm:px-3">
                   <button
                     onClick={() => {

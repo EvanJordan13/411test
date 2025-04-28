@@ -1,7 +1,7 @@
 "use client";
 
 import { Star, StarOff, TrendingUp, TrendingDown, X } from "lucide-react";
-import Link from "next/link"; // Import Link
+import Link from "next/link";
 import type { Player } from "@/types";
 
 interface PlayerCardProps {
@@ -9,9 +9,9 @@ interface PlayerCardProps {
   favorites: string[];
   onToggleFavorite: (player: Player) => void;
   showStats?: boolean;
-  showNews?: boolean; // Keep prop, but news data might be mock
+  showNews?: boolean;
   className?: string;
-  onRemove?: () => void; // Add prop for removing the player from selection
+  onRemove?: () => void;
 }
 
 export default function PlayerCard({
@@ -19,7 +19,7 @@ export default function PlayerCard({
   favorites,
   onToggleFavorite,
   showStats = true,
-  showNews = false, // Default to false as backend doesn't support it
+  showNews = false,
   className = "",
   onRemove,
 }: PlayerCardProps) {
@@ -27,7 +27,6 @@ export default function PlayerCard({
     <div
       className={`bg-white rounded-xl shadow-sm overflow-hidden relative ${className}`}
     >
-      {/* Optional Remove Button */}
       {onRemove && (
         <button
           onClick={onRemove}
@@ -44,9 +43,7 @@ export default function PlayerCard({
           {/* Player Info */}
           <div className="pr-8">
             {" "}
-            {/* Add padding to prevent overlap with X button */}
-            {/* Wrap name in Link */}
-            <Link href={`/player/${player.id}`} className="hover:underline">
+            <Link href={`/players/${player.id}`} className="hover:underline">
               <h3 className="text-2xl font-bold text-gray-900 mb-2 inline-block">
                 {player.name}
               </h3>
@@ -58,18 +55,15 @@ export default function PlayerCard({
                 className="hover:underline"
               >
                 {" "}
-                {/* Assuming teamId exists */}
                 <span className="badge badge-blue">{player.team}</span>
               </Link>
               <span className="badge badge-gray">{player.position}</span>
-              {/* Display Age if available */}
               {player.playerAge && (
                 <span className="text-sm text-gray-500 ml-2">
                   Age: {player.playerAge}
                 </span>
               )}
             </div>
-            {/* Display Seasons/Games if available */}
             {(player.numSeasons !== undefined ||
               player.numGames !== undefined) && (
               <div className="mt-1 text-xs text-gray-500">
@@ -134,7 +128,7 @@ export default function PlayerCard({
         {showStats && Object.keys(player.stats).length > 0 && (
           <div className="grid grid-cols-2 gap-4 mb-6">
             {Object.entries(player.stats)
-              .slice(0, 4) // Show top 4 stats, consider making this dynamic or position-based
+              .slice(0, 4)
               .map(([key, value]) => (
                 <div key={key} className="bg-gray-50 p-4 rounded-lg">
                   <div
@@ -154,7 +148,7 @@ export default function PlayerCard({
           </div>
         )}
 
-        {/* news - Keep structure but data is mock from adapter */}
+        {/* news */}
         {showNews && player.recentNews && player.recentNews.length > 0 && (
           <div className="space-y-2">
             <h4 className="font-medium text-gray-900 mb-2">
