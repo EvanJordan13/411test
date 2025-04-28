@@ -29,7 +29,6 @@ public class PlayerController {
         player.setNumSeasons(result.getInt("numSeasons"));
         player.setNumGames(result.getInt("numGames"));
 
-        // TODO: Should this just set all stats for simplicity?
         // Set the average stats for the player based on their position.
         String position = (result.getString("position"));
         player.setPosition(position);
@@ -48,31 +47,74 @@ public class PlayerController {
     }
 
     /**
-     * Lists and sorts players given request parameters. Paginates results with pageSize 10.
-     * TODO: Implement sorting and filtering.
-     * TODO: Maybe put the SQL query to get all averages in stored procedure.
+     * Lists and sorts players given request parameters. Paginates results with pageSize 50.
      *
      * @param page The page number to retrieve (default is 1) as a request parameter.
-     * @return List of Player objects that match criteria.
-     * @throws EmptyResultDataAccessException if no player is found. Handled by GlobalExceptionHandler.
+     * @param orderBy The column to order by as a request parameter.
+     * @param orderByDir The direction to order by (ASC or DESC) as a request parameter.
+     * @param name The name of the player to filter by as a request parameter.
+     * @param team The team name to filter by as a request parameter.
+     * @param position The position to filter by as a request parameter.
+     * @return List of Player objects that match criteria, or an empty List if no players found.
      */
     @GetMapping("/players")
-    public List<Player> listPlayers(@RequestParam(defaultValue = "1") int page) {
-        int pageSize = 10;
+    public List<Player> listPlayers(@RequestParam(defaultValue = "1") int page,
+                                    @RequestParam(required = false) String orderBy,
+                                    @RequestParam(required = false) String orderByDir,
+                                    @RequestParam(required = false) String name,
+                                    @RequestParam(required = false) String team,
+                                    @RequestParam(required = false) String position) {
+        int pageSize = 50;
         int offset = pageSize * (page - 1);
+
         // Displays all avg stats for the players, even irrelevant ones.
         // Add "avg" to stat name, e.g. avgpassYds (no capitalization).
         // These will be parsed properly in the response, see the rowMapper code.
-        String sql = """
-            SELECT p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score, COUNT(s.year) AS numSeasons, SUM(s.games) AS numGames,
-            AVG(s.passYds) AS avgpassYds, AVG(s.passTDs) AS avgpassTDs, AVG(s.ints) AS avgints, AVG(s.compPct) AS avgcompPct,
-            AVG(s.rshAtt) AS avgrshAtt, AVG(s.rshYds) AS avgrshYds, AVG(s.rshTDs) AS avgrshTDs, AVG(s.rec) AS avgrec,\s
-            AVG(s.recYds) AS avgrecYds, AVG(s.recTDs) AS avgrecTDs
-            FROM Player p JOIN Statistics s USING(playerID) JOIN Team t USING(teamID)
-            GROUP BY p.playerID
-            LIMIT ? OFFSET ?
-            """;
-        return jdbcTemplate.query(sql, rowMapper, pageSize, offset);
+
+        StringBuilder sqlBuilder = new StringBuilder(
+            """
+            SELECT p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score,
+                   COUNT(s.year) AS numSeasons, SUM(s.games) AS numGames,
+                   AVG(s.passYds) AS avgpassYds, AVG(s.passTDs) AS avgpassTDs, AVG(s.ints) AS avgints, AVG(s.compPct) AS avgcompPct,
+                   AVG(s.rshAtt) AS avgrshAtt, AVG(s.rshYds) AS avgrshYds, AVG(s.rshTDs) AS avgrshTDs,
+                   AVG(s.rec) AS avgrec, AVG(s.recYds) AS avgrecYds, AVG(s.recTDs) AS avgrecTDs
+            FROM Player p
+            JOIN Statistics s USING(playerID)
+            JOIN Team t USING(teamID)
+            WHERE 1=1
+            """);
+
+        if (name != null && !name.isBlank()) {
+            sqlBuilder.append(" AND p.playerName LIKE '%").append(name).append("%'");
+        }
+        if (team != null && !team.isBlank()) {
+            sqlBuilder.append(" AND t.teamName LIKE '%").append(team).append("%'");
+        }
+        if (position != null && !position.isBlank()) {
+            sqlBuilder.append(" AND p.position = '").append(position).append("'");
+        }
+        sqlBuilder.append(" GROUP BY p.playerID");
+        String orderClause;
+        if (orderBy != null && !orderBy.isBlank()) {
+            if (orderByDir != null && orderByDir.equals("ASC")) {
+                orderClause = " ORDER BY " + orderBy + " ASC";
+            } else {
+                orderClause = " ORDER BY " + orderBy + " DESC";
+            }
+        } else {
+            orderClause = " ORDER BY p.score DESC";
+        }
+        sqlBuilder.append(orderClause);
+        sqlBuilder.append(" LIMIT ? OFFSET ?");
+
+        String sql = sqlBuilder.toString();
+
+        try {
+            return jdbcTemplate.query(sql, rowMapper, pageSize, offset);
+        } catch (EmptyResultDataAccessException e) {
+            // Just return an empty list.
+            return List.of();
+        }
     }
 
     /**
@@ -80,7 +122,6 @@ public class PlayerController {
      *
      * @param playerID The ID of the player to retrieve as a path variable.
      * @return The Player object if found.
-     * @throws EmptyResultDataAccessException if no player is found. Handled by GlobalExceptionHandler.
      */
     @GetMapping("/players/{playerID}")
     public Player getPlayer(@PathVariable String playerID) {

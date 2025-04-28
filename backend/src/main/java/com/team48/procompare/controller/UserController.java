@@ -1,5 +1,6 @@
 package com.team48.procompare.controller;
 
+import com.team48.procompare.model.FavoriteSummary;
 import com.team48.procompare.model.Player;
 import com.team48.procompare.model.PositionEnum;
 import com.team48.procompare.model.User;
@@ -26,19 +27,9 @@ public class UserController {
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-
-    RowMapper<User> rowMapper = (result, rowNum) -> {
-        User u = new User();
-        u.setUsername(result.getString("username"));
-        List<Player> favorites = new ArrayList<>();
-
-        return u;
-    };
-
     public UserController(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
         this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-
     }
 
     private final RowMapper<Player> fullPlayerRowMapper = (result, rowNum) -> {
@@ -67,6 +58,13 @@ public class UserController {
             
         
         return player;
+    };
+
+    private final RowMapper<FavoriteSummary> favoriteSummaryRowMapper = (result, rowNum) -> {
+        FavoriteSummary summary = new FavoriteSummary();
+        summary.setTier(result.getString("tier"));
+        summary.setCount(result.getInt("Count"));
+        return summary;
     };
 
     /**
@@ -130,8 +128,13 @@ public class UserController {
      */
     @PostMapping("/users")
     public void createUser(@RequestParam String username) {
+
         String sql = "INSERT INTO Users (username) VALUES (?)";
-        jdbcTemplate.update(sql, username);
+        try {
+            jdbcTemplate.update(sql, username);
+        } catch (DuplicateKeyException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User already exists", e);
+        }
     }
 
     /**
@@ -162,7 +165,7 @@ public class UserController {
              jdbcTemplate.update(sql, username, playerID);
 
         } catch (DuplicateKeyException e) {
-            // Do nothing
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User already in favorites.", e);
         } catch (DataIntegrityViolationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid user or id", e);
         }
@@ -178,6 +181,19 @@ public class UserController {
     public void deleteFavorite(@PathVariable String username, @PathVariable String playerID) {
         String sql = "DELETE FROM Favorites WHERE username = ? AND playerID = ?";
         jdbcTemplate.update(sql, username, playerID);
+    }
+
+    /**
+     * Gets a user's favorites summary based on position and stat.
+     *
+     * @param username The username of the user to retrieve as a path variable.
+     * @param position The position to filter by as a request parameter.
+     * @param stat The stat to filter by as a request parameter.
+     */
+    @GetMapping("/users/{username}/favorites/summary")
+    public List<FavoriteSummary> getFavoriteSummary(@PathVariable String username, @RequestParam String position, @RequestParam String stat) {
+        String sql = "CALL GetFavoriteSummary(?, ?, ?)";
+        return jdbcTemplate.query(sql, favoriteSummaryRowMapper, position, stat, username);
     }
 
 }

@@ -4,6 +4,7 @@ import com.team48.procompare.model.Team;
 import java.util.List;
 
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.jdbc.core.RowMapper;
@@ -40,5 +41,14 @@ public class TeamController {
             """;
         return jdbcTemplate.query(sql, rowMapper);
     }
+
+//    @GetMapping("/teams/{teamID}")
+//    public Team getTeam(@PathVariable int teamID) {
+//        String sql = """
+//            SELECT *
+//            FROM Team
+//            """;
+//        return jdbcTemplate.queryForObject(sql, rowMapper);
+//    }
 
 }
