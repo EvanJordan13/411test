@@ -1,9 +1,10 @@
 package com.team48.procompare.controller;
 
+import com.team48.procompare.model.FavoriteSummary;
 import com.team48.procompare.model.Player;
-import com.team48.procompare.model.PositionEnum;
 import com.team48.procompare.model.User;
 
+import com.team48.procompare.rowmapper.PlayerRowMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -16,57 +17,23 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 public class UserController {
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-
-    RowMapper<User> rowMapper = (result, rowNum) -> {
-        User u = new User();
-        u.setUsername(result.getString("username"));
-        List<Player> favorites = new ArrayList<>();
-
-        return u;
-    };
-
     public UserController(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
         this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-
     }
 
-    private final RowMapper<Player> fullPlayerRowMapper = (result, rowNum) -> {
-        Player player = new Player();
-        player.setPlayerID(result.getString("playerID"));
-        player.setPlayerName(result.getString("playerName"));
-        player.setPlayerAge(result.getInt("playerAge"));
-        player.setTeamId(result.getInt("teamID"));
-        player.setTeamName(result.getString("teamName"));
-        player.setScore(result.getFloat("score"));
-
-        String position = (result.getString("position"));
-        player.setPosition(position);
-             
-        PositionEnum positionEnum = PositionEnum.valueOf(position);
-        List<String> statNames = positionEnum.getStats();
-        Map<String, Object> stats = new HashMap<>();
-
-        for(String statName : statNames) {
-            Object statValue = result.getObject("avg" + statName.toLowerCase());
-            stats.put(statName, statValue);
-                    
-        }
-
-        player.setStats(stats);
-            
-        
-        return player;
+    private final RowMapper<FavoriteSummary> favoriteSummaryRowMapper = (result, rowNum) -> {
+        FavoriteSummary summary = new FavoriteSummary();
+        summary.setTier(result.getString("tier"));
+        summary.setCount(result.getInt("Count"));
+        return summary;
     };
 
     /**
@@ -98,23 +65,25 @@ public class UserController {
          List<Player> favoritePlayers = new ArrayList<>();
          if (!favoritePlayerIDs.isEmpty()) {
              //Fetch details for only the favorited players
-             String fullFavoritesSql = """
-                SELECT p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score,
-                AVG(s.passYds) AS avgpassyds, AVG(s.passTDs) AS avgpasstds, AVG(s.ints) AS avgints, AVG(s.compPct) AS avgcomppct,
-                AVG(s.rshAtt) AS avgrshatt, AVG(s.rshYds) AS avgrshyds, AVG(s.rshTDs) AS avgrshtds, AVG(s.rec) AS avgrec,
-                AVG(s.recYds) AS avgrecyds, AVG(s.recTDs) AS avgrectds
-                FROM Player p
-                JOIN Team t ON p.teamID = t.teamID
-                LEFT JOIN Statistics s ON p.playerID = s.playerID
-                WHERE p.playerID IN (:playerIDs)
-                GROUP BY p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score
-                """;
+            String fullFavoritesSql =
+             """
+            SELECT p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score,
+                   COUNT(s.year) AS numSeasons, SUM(s.games) AS numGames,
+                   AVG(s.passYds) AS avgpassYds, AVG(s.passTDs) AS avgpassTDs, AVG(s.ints) AS avgints, AVG(s.compPct) AS avgcompPct,
+                   AVG(s.rshAtt) AS avgrshAtt, AVG(s.rshYds) AS avgrshYds, AVG(s.rshTDs) AS avgrshTDs,
+                   AVG(s.rec) AS avgrec, AVG(s.recYds) AS avgrecYds, AVG(s.recTDs) AS avgrecTDs
+            FROM Player p
+            JOIN Statistics s USING(playerID)
+            JOIN Team t USING(teamID)
+            WHERE p.playerID IN (:playerIDs)
+            GROUP BY p.playerID, p.playerName, p.playerAge, t.teamID, t.teamName, p.position, p.score
+            """;
  
              MapSqlParameterSource parameters = new MapSqlParameterSource();
              parameters.addValue("playerIDs", favoritePlayerIDs);
  
              
-             favoritePlayers = namedParameterJdbcTemplate.query(fullFavoritesSql, parameters, fullPlayerRowMapper);
+             favoritePlayers = namedParameterJdbcTemplate.query(fullFavoritesSql, parameters, new PlayerRowMapper());
          }
  
          // set the list favorite players
@@ -130,8 +99,13 @@ public class UserController {
      */
     @PostMapping("/users")
     public void createUser(@RequestParam String username) {
+
         String sql = "INSERT INTO Users (username) VALUES (?)";
-        jdbcTemplate.update(sql, username);
+        try {
+            jdbcTemplate.update(sql, username);
+        } catch (DuplicateKeyException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User already exists", e);
+        }
     }
 
     /**
@@ -162,7 +136,7 @@ public class UserController {
              jdbcTemplate.update(sql, username, playerID);
 
         } catch (DuplicateKeyException e) {
-            // Do nothing
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User already in favorites.", e);
         } catch (DataIntegrityViolationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid user or id", e);
         }
@@ -178,6 +152,19 @@ public class UserController {
     public void deleteFavorite(@PathVariable String username, @PathVariable String playerID) {
         String sql = "DELETE FROM Favorites WHERE username = ? AND playerID = ?";
         jdbcTemplate.update(sql, username, playerID);
+    }
+
+    /**
+     * Gets a user's favorites summary based on position and stat.
+     *
+     * @param username The username of the user to retrieve as a path variable.
+     * @param position The position to filter by as a request parameter.
+     * @param stat The stat to filter by as a request parameter.
+     */
+    @GetMapping("/users/{username}/favorites/summary")
+    public List<FavoriteSummary> getFavoriteSummary(@PathVariable String username, @RequestParam String position, @RequestParam String stat) {
+        String sql = "CALL GetFavoriteSummary(?, ?, ?)";
+        return jdbcTemplate.query(sql, favoriteSummaryRowMapper, position, stat, username);
     }
 
 }
