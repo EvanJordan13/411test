@@ -84,6 +84,8 @@ public class PlayerController {
             WHERE 1=1
             """);
 
+
+
         if (name != null && !name.isBlank()) {
             sqlBuilder.append(" AND p.playerName LIKE '%").append(name).append("%'");
         }
