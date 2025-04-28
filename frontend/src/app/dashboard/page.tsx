@@ -13,16 +13,28 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import type { Player } from "@/types";
+// Replace mock data with actual data fetching if possible in the future
+// For now, we keep the structure but link the names if IDs are present
+import { useFavorites } from "@/lib/hooks/useFavorites"; // Use actual favorites hook
 
 export default function DashboardPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [favorites, setFavorites] = useState<number[]>([1]);
+  // Use the actual favorites hook
+  const {
+    favorites: favoritePlayers,
+    toggleFavorite,
+    isFavorite,
+  } = useFavorites({});
+
+  // Convert favorite Player objects to Set of IDs for quick lookup
+  const favoriteIds = new Set(favoritePlayers.map((p) => p.id));
 
   // Mock data will need to get real stuff eventually
+  // Ensure mock players have string IDs consistent with rest of app
   const trendingPlayers: Player[] = [
     {
-      id: "1",
+      id: "1", // Assuming backend uses string IDs like 'MahomesP00' eventually
       name: "Patrick Mahomes",
       team: "KC",
       position: "QB",
@@ -36,7 +48,7 @@ export default function DashboardPage() {
       trend: "up",
     },
     {
-      id: "2",
+      id: "2", // Example ID
       name: "Travis Kelce",
       team: "KC",
       position: "TE",
@@ -50,7 +62,7 @@ export default function DashboardPage() {
       trend: "down",
     },
     {
-      id: "3",
+      id: "3", // Example ID
       name: "Josh Allen",
       team: "BUF",
       position: "QB",
@@ -73,29 +85,26 @@ export default function DashboardPage() {
         "Mahomes leads Chiefs to victory with spectacular 4-TD performance",
       date: "2024-02-16",
       player: "Patrick Mahomes",
+      playerId: "1", // Add mock player ID for linking
     },
     {
       id: 2,
       title: "Josh Allen sets franchise record in Bills win over Dolphins",
       date: "2024-02-15",
       player: "Josh Allen",
+      playerId: "3", // Add mock player ID for linking
     },
     {
       id: 3,
       title: "Chiefs' Kelce shows signs of decline in recent games",
       date: "2024-02-14",
       player: "Travis Kelce",
+      playerId: "2", // Add mock player ID for linking
     },
   ];
 
-  const toggleFavorite = (playerId: string) => {
-    const playerIdAsNumber = parseInt(playerId, 10);
-    setFavorites((prev) =>
-      prev.includes(playerIdAsNumber)
-        ? prev.filter((id) => id !== playerIdAsNumber)
-        : [...prev, playerIdAsNumber]
-    );
-  };
+  // Use the actual toggleFavorite from the hook
+  // const toggleFavorite = (playerId: string) => { ... }; // Remove mock toggle
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +130,7 @@ export default function DashboardPage() {
             <div className="relative rounded-lg shadow-sm">
               <input
                 type="text"
-                placeholder="Search players by name, team, or position..."
+                placeholder="Search players or start a comparison..." // Updated placeholder
                 className="w-full p-4 pr-12 rounded-xl border-0 focus:ring-2 focus:ring-blue-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -130,6 +139,7 @@ export default function DashboardPage() {
                 <button
                   type="submit"
                   className="p-2 text-gray-400 hover:text-gray-600"
+                  aria-label="Search Players"
                 >
                   <Search size={20} />
                 </button>
@@ -145,7 +155,7 @@ export default function DashboardPage() {
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900">
-                  Trending Players
+                  Trending Players (Mock Data)
                 </h2>
                 <Link
                   href="/compare"
@@ -163,16 +173,17 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center flex-shrink-0">
                           <span className="text-sm font-semibold text-blue-700">
                             {player.position}
                           </span>
                         </div>
                         <div>
                           <div className="flex items-center space-x-2">
+                            {/* Wrap name in Link */}
                             <Link
                               href={`/player/${player.id}`}
-                              className="font-medium text-gray-900 hover:text-blue-600"
+                              className="font-medium text-gray-900 hover:text-blue-600 hover:underline"
                             >
                               {player.name}
                             </Link>
@@ -203,11 +214,19 @@ export default function DashboardPage() {
                           </div>
                         </div>
                         <button
-                          onClick={() => toggleFavorite(player.id)}
+                          onClick={() => toggleFavorite(player)} // Use actual hook function
                           className="text-gray-400 hover:text-yellow-500"
+                          aria-label={
+                            isFavorite(player.id)
+                              ? "Remove from favorites"
+                              : "Add to favorites"
+                          }
                         >
-                          {favorites.includes(Number(player.id)) ? (
-                            <Star size={20} className="text-yellow-500" />
+                          {isFavorite(player.id) ? ( // Use actual hook function
+                            <Star
+                              size={20}
+                              className="text-yellow-500 fill-current"
+                            />
                           ) : (
                             <StarOff size={20} />
                           )}
@@ -234,7 +253,7 @@ export default function DashboardPage() {
             {/* Recent News */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">
-                Recent News
+                Recent News (Mock Data)
               </h2>
               <div className="space-y-4">
                 {recentNews.map((news) => (
@@ -247,11 +266,10 @@ export default function DashboardPage() {
                     </h3>
                     <div className="flex justify-between items-center text-sm text-gray-500">
                       <span>{news.date}</span>
+                      {/* Link player name in news */}
                       <Link
-                        href={`/player/${encodeURIComponent(
-                          news.player.toLowerCase().replace(" ", "-")
-                        )}`}
-                        className="text-blue-600 hover:text-blue-700"
+                        href={`/player/${news.playerId}`} // Use playerId from mock data
+                        className="text-blue-600 hover:text-blue-700 hover:underline"
                       >
                         {news.player}
                       </Link>
@@ -273,6 +291,16 @@ export default function DashboardPage() {
                 >
                   <span className="font-medium text-gray-700">
                     My Favorites
+                  </span>
+                  <ChevronRight size={18} className="text-gray-400" />
+                </Link>
+                {/* Link to Teams Page */}
+                <Link
+                  href="/teams"
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+                >
+                  <span className="font-medium text-gray-700">
+                    Browse Teams
                   </span>
                   <ChevronRight size={18} className="text-gray-400" />
                 </Link>

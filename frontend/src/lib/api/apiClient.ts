@@ -6,7 +6,6 @@ async function fetchAPI<T>(
   options?: RequestInit
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-
   try {
     const response = await fetch(url, {
       ...options,
@@ -15,7 +14,6 @@ async function fetchAPI<T>(
         ...options?.headers,
       },
     });
-
     if (!response.ok) {
       if (response.status === 404) {
         throw new Error("Resource not found");
@@ -40,12 +38,24 @@ async function fetchAPI<T>(
 
 // Player API methods
 export const playerAPI = {
-  getPlayers: (page: number = 1) => fetchAPI<any[]>(`/players?page=${page}`),
+  getPlayers: (
+    page: number = 1,
+    position?: string,
+    name?: string,
+    team?: string,
+    orderBy?: string,
+    orderByDir?: "ASC" | "DESC"
+  ) => {
+    const params = new URLSearchParams({ page: page.toString() });
+    if (position && position !== "all") params.append("position", position);
+    if (name) params.append("name", name);
+    if (team && team !== "all") params.append("team", team);
+    if (orderBy) params.append("orderBy", orderBy);
+    if (orderByDir) params.append("orderByDir", orderByDir);
+    return fetchAPI<any[]>(`/players?${params.toString()}`);
+  },
 
   getPlayerById: (playerId: string) => fetchAPI<any>(`/players/${playerId}`),
-
-  getPlayersByPosition: (position: string, page: number = 1) =>
-    fetchAPI<any[]>(`/players?position=${position}&page=${page}`),
 
   comparePlayers: (player1Id: string, player2Id: string) => {
     return Promise.all([
@@ -57,18 +67,32 @@ export const playerAPI = {
 
 // Team API methods
 export const teamAPI = {
-  getTeams: () => fetchAPI<any[]>("/teams"),
+  getTeams: (name?: string, orderBy?: string, orderByDir?: "ASC" | "DESC") => {
+    const params = new URLSearchParams();
+    if (name) params.append("name", name);
+    if (orderBy) params.append("orderBy", orderBy);
+    if (orderByDir) params.append("orderByDir", orderByDir);
+    const queryString = params.toString();
+    return fetchAPI<any[]>(`/teams${queryString ? `?${queryString}` : ""}`);
+  },
+
+  getTeamById: (teamId: number) => fetchAPI<any>(`/teams/${teamId}`),
 };
 
 // User API methods
 export const userAPI = {
   getUserProfile: (username: string) => fetchAPI<any>(`/users/${username}`),
 
-  createUser: (username: string) =>
-    fetchAPI<any>("/users", {
+  createUser: (username: string) => {
+    const params = new URLSearchParams({ username: username });
+    return fetchAPI<any>("/users", {
       method: "POST",
-      body: JSON.stringify({ username }),
-    }),
+      body: params.toString(),
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    });
+  },
 
   deleteUser: (username: string) =>
     fetchAPI<{ success: boolean }>(`/users/${username}`, {
@@ -88,6 +112,13 @@ export const userAPI = {
     fetchAPI<any>(`/users/${username}/favorites/${playerId}`, {
       method: "DELETE",
     }),
+
+  getFavoriteSummary: (username: string, position: string, stat: string) => {
+    const params = new URLSearchParams({ position, stat });
+    return fetchAPI<any[]>(
+      `/users/${username}/favorites/summary?${params.toString()}`
+    );
+  },
 };
 
 export default {

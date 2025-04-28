@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { userAPI } from "@/lib/api/apiClient";
-import { adaptPlayerData } from "@/lib/adapters/playerAdapter";
+import {
+  adaptPlayerData,
+  adaptFavoriteSummary,
+  FavoriteSummaryData,
+} from "@/lib/adapters/playerAdapter";
 import { Player } from "@/types";
 import { useAuth } from "@/lib/context/AuthContext";
 
@@ -8,14 +12,19 @@ interface UseFavoritesOptions {
   initialFavorites?: Player[];
 }
 
-export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
+export function useFavorites({
+  initialFavorites = [],
+}: UseFavoritesOptions = {}) {
   const { username, isAuthenticated } = useAuth();
-
   const [favorites, setFavorites] = useState<Player[]>(initialFavorites);
   const [loading, setLoading] = useState<boolean>(isAuthenticated);
   const [error, setError] = useState<string | null>(null);
-
   const [playerNotes, setPlayerNotes] = useState<Record<string, string>>({});
+  const [favoriteSummary, setFavoriteSummary] = useState<FavoriteSummaryData[]>(
+    []
+  );
+  const [summaryLoading, setSummaryLoading] = useState<boolean>(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   const fetchFavorites = useCallback(async () => {
     if (!username) {
@@ -33,18 +42,62 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
       if (userData && userData.favorites) {
         const adaptedFavorites = userData.favorites.map(adaptPlayerData);
 
-        setFavorites(adaptedFavorites);
+        // Load notes after favorites are fetched
+        const storedNotes = localStorage.getItem(`notes_${username}`);
+        let notesMap: Record<string, string> = {};
+        if (storedNotes) {
+          try {
+            notesMap = JSON.parse(storedNotes);
+          } catch {
+            localStorage.removeItem(`notes_${username}`);
+          }
+        }
+        setPlayerNotes(notesMap); // Set notes state
+
+        // Apply stored notes to adapted favorites
+        const favoritesWithNotes = adaptedFavorites.map(
+          (fav: { id: string | number }) => ({
+            ...fav,
+            note: notesMap[fav.id] || "",
+          })
+        );
+
+        setFavorites(favoritesWithNotes);
+        // Persist fetched favorites locally in case backend becomes unavailable later
+        localStorage.setItem(
+          `favorites_${username}`,
+          JSON.stringify(favoritesWithNotes)
+        );
       } else {
         setFavorites([]);
+        localStorage.removeItem(`favorites_${username}`); // Clear local cache if backend returns none
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "erro");
+      setError(err instanceof Error ? err.message : "Error fetching favorites");
+      // Fallback to local storage if fetch fails
       const storedFavorites = localStorage.getItem(`favorites_${username}`);
       if (storedFavorites) {
         try {
-          setFavorites(JSON.parse(storedFavorites));
+          const parsedFavorites = JSON.parse(storedFavorites);
+          // Ensure notes are loaded even on fallback
+          const storedNotes = localStorage.getItem(`notes_${username}`);
+          let notesMap: Record<string, string> = {};
+          if (storedNotes) {
+            try {
+              notesMap = JSON.parse(storedNotes);
+            } catch {
+              localStorage.removeItem(`notes_${username}`);
+            }
+          }
+          setPlayerNotes(notesMap);
+          const favoritesWithNotes = parsedFavorites.map((fav: Player) => ({
+            ...fav,
+            note: notesMap[fav.id] || "",
+          }));
+          setFavorites(favoritesWithNotes);
         } catch {
           localStorage.removeItem(`favorites_${username}`);
+          setFavorites([]);
         }
       } else {
         setFavorites([]);
@@ -54,59 +107,112 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
     }
   }, [username]);
 
+  const fetchFavoriteSummary = useCallback(
+    async (position: string, stat: string) => {
+      if (!username) return;
+      setSummaryLoading(true);
+      setSummaryError(null);
+      try {
+        const summaryData = await userAPI.getFavoriteSummary(
+          username,
+          position,
+          stat
+        );
+        const adaptedSummary = summaryData.map(adaptFavoriteSummary);
+        setFavoriteSummary(adaptedSummary);
+      } catch (err) {
+        setSummaryError(
+          err instanceof Error ? err.message : "Error fetching favorite summary"
+        );
+        setFavoriteSummary([]);
+      } finally {
+        setSummaryLoading(false);
+      }
+    },
+    [username]
+  );
+
   const addFavorite = useCallback(
     async (player: Player) => {
       if (!username) return;
 
-      setLoading(true);
+      // Optimistic UI update
+      const previousFavorites = favorites;
+      const newOptimisticFavorites = [
+        ...previousFavorites,
+        { ...player, note: playerNotes[player.id] || "" },
+      ];
+      setFavorites(newOptimisticFavorites);
+
+      setLoading(true); // Use main loading indicator or a specific one?
       setError(null);
 
       try {
         await userAPI.addFavorite(username, player.id.toString());
-        // Update local storage and state after successful API call
-        setFavorites((prev) => {
-          if (prev.some((p) => p.id === player.id)) return prev;
-          const newFavorites = [...prev, player];
-          localStorage.setItem(
-            `favorites_${username}`,
-            JSON.stringify(newFavorites)
-          );
-          return newFavorites;
-        });
+        // Update local storage after successful API call
+        localStorage.setItem(
+          `favorites_${username}`,
+          JSON.stringify(newOptimisticFavorites)
+        );
+        // No need to setFavorites again if optimistic update worked
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "An error occurred adding favorite"
+        );
+        // Revert optimistic update on error
+        setFavorites(previousFavorites);
+        localStorage.setItem(
+          `favorites_${username}`,
+          JSON.stringify(previousFavorites)
+        );
       } finally {
         setLoading(false);
       }
     },
-    [username]
+    [username, favorites, playerNotes] // Added dependencies
   );
 
   const removeFavorite = useCallback(
     async (playerId: string) => {
       if (!username) return;
 
-      setLoading(true);
+      // Optimistic UI update
+      const previousFavorites = favorites;
+      const newOptimisticFavorites = previousFavorites.filter(
+        (p) => p.id !== playerId
+      );
+      setFavorites(newOptimisticFavorites);
+
+      setLoading(true); // Use main loading indicator or a specific one?
       setError(null);
 
       try {
         await userAPI.removeFavorite(username, playerId.toString());
-        // Update local storage and state after successful API call
-        setFavorites((prev) => {
-          const newFavorites = prev.filter((p) => p.id !== playerId);
-          localStorage.setItem(
-            `favorites_${username}`,
-            JSON.stringify(newFavorites)
-          );
-          return newFavorites;
-        });
+        // Update local storage after successful API call
+        localStorage.setItem(
+          `favorites_${username}`,
+          JSON.stringify(newOptimisticFavorites)
+        );
+        // No need to setFavorites again if optimistic update worked
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "An error occurred removing favorite"
+        );
+        // Revert optimistic update on error
+        setFavorites(previousFavorites);
+        localStorage.setItem(
+          `favorites_${username}`,
+          JSON.stringify(previousFavorites)
+        );
       } finally {
         setLoading(false);
       }
     },
-    [username]
+    [username, favorites] // Added dependency
   );
 
   const toggleFavorite = useCallback(
@@ -115,10 +221,15 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
       if (isCurrentlyFavorite) {
         removeFavorite(player.id);
       } else {
-        addFavorite(player);
+        // Ensure player object passed to addFavorite includes current note if any
+        const playerWithNote = {
+          ...player,
+          note: playerNotes[player.id] || "",
+        };
+        addFavorite(playerWithNote);
       }
     },
-    [favorites, addFavorite, removeFavorite]
+    [favorites, addFavorite, removeFavorite, playerNotes] // Added dependency
   );
 
   const isFavorite = useCallback(
@@ -132,13 +243,12 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
     (playerId: string, note: string) => {
       if (!username) return;
 
-      setPlayerNotes((prev) => {
-        const newNotes = { ...prev, [playerId]: note };
-        localStorage.setItem(`notes_${username}`, JSON.stringify(newNotes));
-        return newNotes;
-      });
+      // Update notes state first
+      const newNotes = { ...playerNotes, [playerId]: note };
+      setPlayerNotes(newNotes);
+      localStorage.setItem(`notes_${username}`, JSON.stringify(newNotes));
 
-      // note in the favorites state as well
+      // Update the note in the favorites state array as well
       setFavorites((prev) =>
         prev.map((p) =>
           p.id === playerId
@@ -150,8 +260,23 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
             : p
         )
       );
+      // Also update the favorites in local storage to persist the note change with the favorite player data
+      localStorage.setItem(
+        `favorites_${username}`,
+        JSON.stringify(
+          favorites.map((p) =>
+            p.id === playerId
+              ? {
+                  ...p,
+                  note,
+                  lastUpdated: new Date().toISOString().split("T")[0],
+                }
+              : p
+          )
+        )
+      );
     },
-    [username]
+    [username, playerNotes, favorites] // Added dependencies
   );
 
   const getNote = useCallback(
@@ -161,26 +286,22 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
     [playerNotes]
   );
 
+  // Initial fetch effect
   useEffect(() => {
-    if (username) {
+    if (isAuthenticated && username) {
       fetchFavorites();
-      const storedNotes = localStorage.getItem(`notes_${username}`);
-      if (storedNotes) {
-        try {
-          setPlayerNotes(JSON.parse(storedNotes));
-        } catch {
-          localStorage.removeItem(`notes_${username}`);
-        }
-      } else {
-        setPlayerNotes({});
-      }
+      // Notes are now loaded within fetchFavorites after successful fetch or from cache on error
     } else {
+      // Clear state if not authenticated or no username
       setFavorites([]);
       setPlayerNotes({});
+      setFavoriteSummary([]);
       setLoading(false);
       setError(null);
+      setSummaryLoading(false);
+      setSummaryError(null);
     }
-  }, [username, fetchFavorites]);
+  }, [username, isAuthenticated, fetchFavorites]); // Rerun if auth state changes
 
   return {
     favorites,
@@ -192,5 +313,9 @@ export function useFavorites({ initialFavorites = [] }: UseFavoritesOptions) {
     isFavorite,
     updateNote,
     getNote,
+    favoriteSummary,
+    summaryLoading,
+    summaryError,
+    fetchFavoriteSummary, // Expose the summary fetch function
   };
 }
