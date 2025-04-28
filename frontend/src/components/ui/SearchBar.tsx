@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useRef, FocusEvent } from "react";
 import { Search } from "lucide-react";
 
 interface SearchBarProps {
@@ -9,7 +9,7 @@ interface SearchBarProps {
   onChange: (value: string) => void;
   onSubmit?: (e: React.FormEvent) => void;
   onFocus?: () => void;
-  onBlur?: () => void;
+  onBlur?: () => void; // Keep prop if needed externally, but internal logic changes
   children?: ReactNode;
   className?: string;
 }
@@ -20,27 +20,38 @@ export default function SearchBar({
   onChange,
   onSubmit,
   onFocus,
-  onBlur,
+  onBlur, // Keep prop, but may not be needed for dropdown control now
   children,
   className = "",
 }: SearchBarProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null); // Ref for the main container
 
   const handleFocus = () => {
     setIsFocused(true);
     if (onFocus) onFocus();
   };
 
-  const handleBlur = () => {
-    // timeout to allow clicks on dropdown items to register before closing
-    setTimeout(() => {
+  // Modified handleBlur to check relatedTarget
+  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
+    // Check if the new focused element is still inside the SearchBar container
+    if (
+      containerRef.current &&
+      !containerRef.current.contains(event.relatedTarget as Node | null)
+    ) {
       setIsFocused(false);
-      if (onBlur) onBlur();
-    }, 200);
+      if (onBlur) onBlur(); // Call external onBlur if provided
+    }
+    // Otherwise, focus remains effectively "inside", so don't close dropdown
   };
 
   return (
-    <div className={`w-full ${className}`}>
+    // Added container div with ref and onBlur handler
+    <div
+      ref={containerRef}
+      className={`w-full relative ${className}`}
+      onBlur={handleBlur} // Attach blur handler here
+    >
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -48,23 +59,24 @@ export default function SearchBar({
         }}
       >
         <div
-          className={`relative transition-all duration-200 ${
-            isFocused ? "shadow-lg transform -translate-y-1" : "shadow"
-          }`}
+          // Removed transition classes from input wrapper, focus state now handled by parent
+          className="relative shadow"
         >
           <input
             type="text"
             placeholder={placeholder}
-            className="w-full p-4 pr-12 rounded-xl border-0 focus:ring-2 focus:ring-blue-500"
+            className="w-full p-4 pr-12 rounded-xl border-0 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-500" // Adjusted focus style
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
+            onFocus={handleFocus} // Keep onFocus on input
+            // Removed onBlur from input
           />
           <div className="absolute inset-y-0 right-0 flex items-center pr-3">
             <button
               type="submit"
               className="p-2 text-gray-400 hover:text-gray-600"
+              // Prevent button click from blurring the container prematurely if needed
+              onMouseDown={(e) => e.preventDefault()}
             >
               <Search size={20} />
             </button>
@@ -72,8 +84,11 @@ export default function SearchBar({
         </div>
       </form>
 
+      {/* Dropdown area */}
       {isFocused && children && (
-        <div className="absolute w-full mt-2 bg-white rounded-xl shadow-xl p-4 z-50">
+        // Use absolute positioning relative to the containerRef div
+        <div className="absolute w-full mt-1 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
+          {/* Content (filters, results) goes here */}
           {children}
         </div>
       )}

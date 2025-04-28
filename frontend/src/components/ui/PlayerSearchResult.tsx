@@ -1,4 +1,5 @@
 import { ArrowRight } from "lucide-react";
+import Link from "next/link"; // Import Link
 import type { Player } from "@/types";
 
 interface PlayerSearchResultProps {
@@ -11,21 +12,27 @@ export default function PlayerSearchResult({
   onSelect,
 }: PlayerSearchResultProps) {
   return (
+    // Keep main div clickable for selection, but add link inside
     <div
       className="p-4 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
       onClick={() => onSelect(player)}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center flex-shrink-0">
             <span className="text-sm font-semibold text-blue-700">
               {player.position}
             </span>
           </div>
-          <div>
+          {/* Wrap name/team in Link, stop propagation to prevent onSelect */}
+          <Link
+            href={`/player/${player.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="hover:underline"
+          >
             <div className="font-medium text-gray-900">{player.name}</div>
             <div className="text-sm text-gray-500">{player.team}</div>
-          </div>
+          </Link>
         </div>
         <div className="flex items-center space-x-3">
           <div className="text-right">
