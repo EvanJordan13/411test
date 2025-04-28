@@ -33,13 +33,20 @@ export default function SearchBar({
   };
 
   const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
-    if (
-      containerRef.current &&
-      !containerRef.current.contains(event.relatedTarget as Node | null)
-    ) {
-      setIsFocused(false);
-      if (onBlur) onBlur();
-    }
+    setTimeout(() => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(document.activeElement)
+      ) {
+        if (
+          !event.relatedTarget ||
+          !containerRef.current.contains(event.relatedTarget as Node)
+        ) {
+          setIsFocused(false);
+          if (onBlur) onBlur();
+        }
+      }
+    }, 150);
   };
 
   return (
@@ -58,7 +65,7 @@ export default function SearchBar({
           <input
             type="text"
             placeholder={placeholder}
-            className="w-full p-4 pr-12 rounded-xl border-0 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-500" // Adjusted focus style
+            className="w-full p-4 pr-12 rounded-xl border-0 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-500"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onFocus={handleFocus}
@@ -75,7 +82,6 @@ export default function SearchBar({
         </div>
       </form>
 
-      {/* Dropdown area */}
       {isFocused && children && (
         <div className="absolute w-full mt-1 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
           {children}
